@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GEARSHED — Timeline: Stratocaster 1950s</title>
+  <meta name="description" content="GEARSHED Timeline — the birth of the Fender Stratocaster in the 1950s, told through a real-time 3D scroll story." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Title: Inter Tight (grotesk, ≈ Neue Montreal) / Body: Instrument Serif (≈ HW Cigars) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/",
+        "lenis": "https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.mjs"
+      }
+    }
+  </script>
+</head>
+<body class="is-loading">
+
+  <!-- ============ LOADER ============ -->
+  <div id="loader" aria-live="polite">
+    <div class="loader-ring">
+      <svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="96" /><circle class="loader-progress" cx="100" cy="100" r="96" /></svg>
+      <div class="loader-text">
+        <span class="loader-logo">GEARSHED</span>
+        <span class="loader-pct"><span id="loaderPct">0</span>%</span>
+      </div>
+    </div>
+    <p class="loader-note">Tuning up the Stratocaster…</p>
+  </div>
+
+  <!-- ============ FIXED LAYERS ============ -->
+  <div id="years" aria-hidden="true"></div>
+  <canvas id="stage" aria-hidden="true"></canvas>
+  <svg id="annos" aria-hidden="true"></svg>
+  <div id="annoLabels" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="logo" href="#top">GEAR<span>SHED</span></a>
+    <nav class="main-nav" aria-label="Main">
+      <a href="#top" class="is-active">Timeline</a>
+      <a href="#" class="is-soon" data-soon>Gear</a>
+      <a href="#" class="is-soon" data-soon>Compare</a>
+      <a href="#" class="is-soon" data-soon>About</a>
+    </nav>
+    <button id="soundToggle" class="sound-toggle" aria-pressed="false" title="Toggle sound">
+      <span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span class="sound-label">Sound off</span>
+    </button>
+  </header>
+
+  <!-- Year rail (right) -->
+  <nav id="rail" aria-label="Jump to year"></nav>
+  <div id="progress"><span></span></div>
+
+  <!-- ============ CONTENT ============ -->
+  <main id="top">
+
+    <!-- 00 HERO -->
+    <section class="chapter hero" data-cam="hero" data-year="1950s" data-rail="Intro">
+      <div class="hero-inner">
+        <p class="eyebrow"><span class="dot"></span>GEARSHED Timeline — Vol.01</p>
+        <h1 class="hero-title">
+          <span class="line"><span>Fender</span></span>
+          <span class="line"><span>Stratocaster</span></span>
+        </h1>
+        <p class="hero-sub">How one guitar, built in a small California shop in the 1950s, became the shape the world pictures when it hears the words <i>electric guitar.</i> Scroll to follow every detail in real-time 3D.</p>
+        <div class="hero-meta">
+          <div><b>Model</b><span>Stratocaster</span></div>
+          <div><b>Debut</b><span>Spring 1954</span></div>
+          <div><b>Maker</b><span>Fender, Fullerton CA</span></div>
+        </div>
+      </div>
+      <div class="scroll-cue"><span>Scroll</span><i></i></div>
+    </section>
+
+    <!-- 01 ORIGIN -->
+    <section class="chapter" data-cam="origin" data-year="1951" data-rail="1951">
+      <div class="panel left">
+        <p class="kicker"><span class="num">01</span> The Idea</p>
+        <h2>He just wanted a better guitar.</h2>
+        <p>By 1953, Fender was a scrappy seven-year-old company that had already shaken up the industry with the <b>Telecaster</b> and the <b>Precision Bass.</b> Its founder, Leo Fender, was a self-taught electronics tinkerer — not a serious musician.</p>
+        <p>He wasn’t trying to be radical. As a practical man, he simply wanted to build a better instrument. Work on new pickups and a new bridge was already under way by late 1952.</p>
+        <div class="stat-row">
+          <div class="stat"><span class="stat-num" data-count="7">0</span><span class="stat-label">Years old — Fender in 1953</span></div>
+          <div class="stat"><span class="stat-num" data-count="2">0</span><span class="stat-label">Revolutions already shipped</span></div>
+        </div>
+      </div>
+      <figure class="photo left-photo low reveal-photo" data-parallax="0.12">
+        <div class="photo-frame"><img src="assets/img/workshop.jpg" alt="A worker testing a Stratocaster at a Fender factory bench in the 1950s" loading="lazy" /></div>
+        <figcaption>At the bench, Fender factory — 1950s</figcaption>
+      </figure>
+    </section>
+
+    <!-- 02 SHAPE -->
+    <section class="chapter" data-cam="shape" data-year="1953" data-rail="1953" data-annos="hornUpper,hornLower,waist">
+      <div class="panel right">
+        <p class="kicker"><span class="num">02</span> The Shape</p>
+        <h2>Two horns, a new silhouette.</h2>
+        <p>As late as early 1953, the new guitar still looked a lot like a Telecaster. That spring, newcomer <b>Freddie Tavares</b> sketched a sleek body that borrowed the balanced, double-horned outline of the Precision Bass.</p>
+        <p>It fused Fender’s first two instruments into one. The same year, sales chief <b>Don Randall</b> gave it a name —</p>
+        <p class="big-name">“Stratocaster.”</p>
+      </div>
+      <figure class="photo right-photo reveal-photo" data-parallax="0.1">
+        <div class="photo-frame"><img src="assets/img/drawing-table.jpg" alt="The Fender team gathered around a drafting table" loading="lazy" /></div>
+        <figcaption>Around the drafting table</figcaption>
+      </figure>
+    </section>
+
+    <!-- 03 CONTOUR -->
+    <section class="chapter" data-cam="contour" data-annos="bellyCut,edge">
+      <div class="panel left">
+        <p class="kicker"><span class="num">03</span> Comfort Contour</p>
+        <blockquote class="quote">
+          “Why not get away from a body that is always <i>digging into your ribs?</i>”
+          <cite>— Rex Gallion, guitarist</cite>
+        </blockquote>
+        <p>The Telecaster’s squared-off slab dug into the player’s ribs and picking arm. A solid body has no sound chamber to protect — so why keep the hard edges?</p>
+        <p>Rounded edges, a deep <b>belly cut</b> on the back and a <b>forearm contour</b> on the front. In the words of the original ad, it was built to be <i>“part of the player.”</i></p>
+      </div>
+    </section>
+
+    <!-- 04 TREMOLO -->
+    <section class="chapter tall">
+      <div class="panel left" data-cam="tremolo" data-annos="bridge,saddles,pivot">
+        <p class="kicker"><span class="num">04</span> Synchronized Tremolo</p>
+        <h2>The greatest idea started as a failure.</h2>
+        <p>The first vibrato design flopped. Strings slid over individual rollers, and it sounded, in Bill Carson’s words, like <i>“an amplified banjo with no sustain.”</i> George Fullerton just called it terrible.</p>
+        <p>Leo scrapped the whole thing and started over. Inspired by a <b>gram scale,</b> he finished a new design in late 1953 — one where the entire bridge moves with the strings.</p>
+      </div>
+
+      <div class="patents" data-cam="tremPatent">
+        <figure class="photo patent reveal-photo" data-parallax="0.18">
+          <div class="photo-frame paper"><img src="assets/img/patent-1932.jpg" alt="C.O. Kauffman patent for an apparatus producing tremolo effects, 1932" loading="lazy" /></div>
+          <figcaption>C.O. “Doc” Kauffman, Leo’s former partner — tremolo patent, 1932</figcaption>
+        </figure>
+        <figure class="photo patent reveal-photo" data-parallax="0.06">
+          <div class="photo-frame paper"><img src="assets/img/patent-1956.jpg" alt="C.L. Fender patent 2,741,146 for a tremolo device" loading="lazy" /></div>
+          <figcaption>C.L. Fender, U.S. Patent 2,741,146 — filed Aug 30 1954, granted Apr 10 1956</figcaption>
+        </figure>
+      </div>
+
+      <div class="panel right spec-panel" data-cam="tremSpec" data-annos="tremCover,springs">
+        <p class="kicker">How it floats</p>
+        <ol class="spec-list">
+          <li><span>01</span><div><b>Knife-edge pivot</b>Six screw holes countersunk from both sides form a sharp fulcrum the whole bridge rocks on.</div></li>
+          <li><span>02</span><div><b>Steel inertia block</b>A solid block beneath the bridge plate keeps the sustain.</div></li>
+          <li><span>03</span><div><b>Three springs, then five</b>Springs in the back cavity balance string tension, holding the bridge “floating.”</div></li>
+          <li><span>04</span><div><b>Six saddles</b>Height and length adjustable per string — a big step past the Tele’s three.</div></li>
+        </ol>
+      </div>
+
+      <div class="panel left whammy-panel" data-cam="whammy" data-annos="pivot">
+        <p class="kicker">Try it — push the arm</p>
+        <div class="whammy">
+          <div class="whammy-track" id="whammy" role="slider" aria-label="Tremolo arm" aria-valuemin="-3" aria-valuemax="1" aria-valuenow="0" tabindex="0">
+            <div class="whammy-zero"></div>
+            <div class="whammy-handle"><span></span></div>
+          </div>
+          <div class="whammy-read">
+            <canvas id="stringViz" width="560" height="200"></canvas>
+            <div class="whammy-meta">
+              <span class="semi"><b id="semiVal">0.0</b> semitones</span>
+              <button class="btn" id="pickBtn">▶ Pick a chord</button>
+            </div>
+          </div>
+        </div>
+        <p class="note">Leo imagined a subtle, steel-guitar shimmer. His over-engineered design could drop pitch by three half steps or more — and a decade later, players were using it for dive-bombs.</p>
+      </div>
+    </section>
+
+    <!-- 05 PICKUPS -->
+    <section class="chapter tall" data-year="1954" data-rail="1954">
+      <div class="panel right" data-cam="pickups" data-annos="puNeck,puMid,puBridge">
+        <p class="kicker"><span class="num">05</span> Three Pickups</p>
+        <h2>Not one, not two — three single coils.</h2>
+        <p><b>Alnico 3</b> magnets with <b>staggered pole pieces,</b> set at different heights to even out the uneven output of the heavy string gauges of the day.</p>
+        <p>The three-way switch was meant to pick one pickup at a time. Players soon learned to balance the lever between the notches and blend two — the accidental <i>“in-between”</i> tones.</p>
+      </div>
+
+      <div class="panel left switch-panel" data-cam="switch" data-annos="switch">
+        <p class="kicker">Try it — choose a pickup</p>
+        <div class="selector" id="selector" role="radiogroup" aria-label="Pickup selector">
+          <div class="selector-slot"><div class="selector-lever" id="lever"></div></div>
+          <div class="selector-opts">
+            <button role="radio" data-pos="0" aria-checked="false"><i>1</i>Neck</button>
+            <button role="radio" data-pos="1" aria-checked="false" class="hidden-pos"><i>1½</i>Neck + Mid<small>in-between</small></button>
+            <button role="radio" data-pos="2" aria-checked="true"><i>2</i>Middle</button>
+            <button role="radio" data-pos="3" aria-checked="false" class="hidden-pos"><i>2½</i>Mid + Bridge<small>in-between</small></button>
+            <button role="radio" data-pos="4" aria-checked="false"><i>3</i>Bridge</button>
+          </div>
+        </div>
+        <div class="amp-row">
+          <span class="amp-label">Amp</span>
+          <div class="seg" role="group" aria-label="Amp mode">
+            <button data-amp="clean">Clean</button>
+            <button data-amp="drive" class="is-on">Drive</button>
+          </div>
+        </div>
+        <div class="tone-row">
+          <button class="btn" id="strumBtn">▶ Chord</button>
+          <button class="btn ghost" id="riffBtn">▶ Riff</button>
+        </div>
+        <p id="toneDesc" class="tone-desc">Middle — plain, balanced, neutral.</p>
+      </div>
+    </section>
+
+    <!-- 06 CONTROLS -->
+    <section class="chapter" data-cam="controls" data-annos="vol,tone1,tone2,jack">
+      <div class="panel right">
+        <p class="kicker"><span class="num">06</span> Controls &amp; Jack</p>
+        <h2>Everything within reach.</h2>
+        <p>One volume, two tones — wired only to the neck and middle pickups. The bridge pickup, Fender explained, <i>“does not require additional tone modification.”</i></p>
+        <p>All the electronics mount to the <b>pickguard</b> and drop in with eight screws. The output jack sits <b>angled on the face</b> of the body, not on its side.</p>
+        <div class="stat-row">
+          <div class="stat"><span class="stat-num" data-count="3">0</span><span class="stat-label">Knobs — Vol · Tone · Tone</span></div>
+          <div class="stat"><span class="stat-num" data-count="8">0</span><span class="stat-label">Pickguard screws</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 07 HEADSTOCK -->
+    <section class="chapter" data-cam="headstock" data-annos="tuners,retainer">
+      <div class="panel left">
+        <p class="kicker"><span class="num">07</span> Headstock</p>
+        <h2>Six tuners, all in a row.</h2>
+        <p>Far curvier than the Telecaster’s or the Precision Bass’s, yet with every tuner on one side, easy to reach.</p>
+        <p>Its outline is widely credited to Paul Bigsby’s influence. A single round string retainer in 1954 gave way to a <b>“butterfly” string tree</b> in late 1956.</p>
+      </div>
+    </section>
+
+    <!-- 08 SUNBURST -->
+    <section class="chapter" data-cam="sunburst" data-annos="burstEdge,burstCenter">
+      <div class="panel right">
+        <p class="kicker"><span class="num">08</span> Sunburst</p>
+        <h2>Fender’s first sunburst.</h2>
+        <p>Don Randall insisted on an upscale look: a two-tone fade from a brownish-black <b>Dark Salem</b> at the edges to a golden <b>Canary Yellow</b> at the center.</p>
+        <p>It had a practical upside, too — hiding mismatched grain where two or three pieces of ash were glued together.</p>
+        <div class="burst-demo">
+          <div class="burst-swatch" id="burstSwatch"></div>
+          <div class="burst-ctrl">
+            <div class="seg" role="tablist">
+              <button class="is-on" data-burst="2">2-Tone <small>1954</small></button>
+              <button data-burst="3">3-Tone <small>1958</small></button>
+            </div>
+            <ul class="burst-legend" id="burstLegend"></ul>
+          </div>
+        </div>
+      </div>
+      <figure class="photo left-photo small reveal-photo" data-parallax="0.1">
+        <div class="photo-frame"><img src="assets/img/strat-front-back.jpg" alt="Front and back of a 1950s two-tone sunburst Stratocaster" loading="lazy" /></div>
+        <figcaption>Two-tone sunburst, one-piece maple neck — front / back</figcaption>
+      </figure>
+    </section>
+
+    <!-- 09 LAUNCH -->
+    <section class="chapter tall" data-cam="launch" data-year="1954">
+      <div class="launch">
+        <p class="kicker center"><span class="num">09</span> Launch</p>
+        <h2 class="launch-title">Another <i>“First”</i><br />for Fender!</h2>
+        <div class="launch-grid">
+          <figure class="photo ad reveal-photo" data-parallax="0.08">
+            <div class="photo-frame paper"><img src="assets/img/ad-1954.jpg" alt="1954 Stratocaster advertisement in International Musician magazine" loading="lazy" /></div>
+            <figcaption>International Musician, April 1954</figcaption>
+          </figure>
+          <div class="launch-copy">
+            <ol class="mini-timeline">
+              <li><b>Apr 1954</b>First ad runs in International Musician. A small pre-production run begins.</li>
+              <li><b>May 1954</b>First shipments go out.</li>
+              <li><b>Oct 1954</b>The first full production run.</li>
+            </ol>
+            <div class="price-cards">
+              <div class="price"><span class="price-tag">With Tremolo</span><span class="price-num">$<span data-count="249.50" data-decimals="2">0</span></span></div>
+              <div class="price ghost"><span class="price-tag">Without Tremolo</span><span class="price-num">$<span data-count="229.50" data-decimals="2">0</span></span></div>
+            </div>
+            <p class="note">The response was lukewarm. Three years in, the Strat was still “not particularly well known,” and plenty of pros saw it as a gimmicky contraption. The world needed time to catch up.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 EVOLUTION (horizontal) -->
+    <section class="chapter evo" data-cam="evo" data-year="1955" data-rail="1955–59" id="evo">
+      <div class="evo-sticky">
+        <div class="evo-head">
+          <p class="kicker"><span class="num">10</span> Evolution</p>
+          <h2>Perfected by 1957.</h2>
+        </div>
+        <div class="evo-track" id="evoTrack">
+          <article class="evo-card" data-year="1954">
+            <span class="evo-year">1954</span>
+            <h3>Serial numbers move</h3>
+            <p>In early summer, serials move from the back tremolo plate to the <b>neck plate.</b></p>
+            <ul><li>Custom gold — Eldon Shamblin</li><li>Solid red — Bill Carson</li></ul>
+          </article>
+          <article class="evo-card" data-year="1955">
+            <span class="evo-year">1955</span>
+            <h3>Tougher plastic</h3>
+            <p>Brittle pickguards, knobs and pickup covers switch to a more durable plastic. String holes in the trem plate go from round to <b>oval.</b></p>
+            <ul><li>Neck profile C → V (1955–57)</li></ul>
+          </article>
+          <article class="evo-card photo-card" data-year="1956">
+            <span class="evo-year">1956</span>
+            <h3>Ash to alder</h3>
+            <p>Mid-year, bodies move to cheaper, easier-to-work <b>alder.</b> By late 1956, magnets go <b>Alnico 5</b> and the butterfly string tree arrives.</p>
+            <div class="evo-img"><img src="assets/img/factory-press.jpg" alt="A punch press at the Fender factory" loading="lazy" /></div>
+          </article>
+          <article class="evo-card photo-card highlight" data-year="1957">
+            <span class="evo-year">1957</span>
+            <h3>The Ed Sullivan Show</h3>
+            <p>On December 1, a 21-year-old <b>Buddy Holly</b> plays “That’ll Be the Day” and “Peggy Sue” on a Strat. Around now, George Fullerton creates the first official custom color: <b>Fiesta Red.</b></p>
+            <div class="evo-img"><img src="assets/img/blue-caps.jpg" alt="A 1950s rockabilly band holding Stratocasters" loading="lazy" /></div>
+          </article>
+          <article class="evo-card" data-year="1958">
+            <span class="evo-year">1958</span>
+            <h3>Three-tone sunburst</h3>
+            <p>A <b>red</b> band joins the sunburst. The <b>Jazzmaster</b> arrives the same year, ending the Strat’s brief reign at the top of the line.</p>
+          </article>
+          <article class="evo-card" data-year="1959">
+            <span class="evo-year">1959</span>
+            <h3>Rosewood slab board</h3>
+            <p>The one-piece maple neck gives way to a thick <b>rosewood fingerboard</b> glued on top — the “second incarnation.” In London, Hank Marvin gets his Fiesta Red Strat.</p>
+          </article>
+        </div>
+        <div class="evo-bar"><span id="evoBar"></span></div>
+      </div>
+    </section>
+
+    <!-- 11 OUTRO -->
+    <section class="chapter outro" data-cam="outro" data-year="1960" data-rail="Next">
+      <div class="outro-inner">
+        <p class="kicker center">End of Vol.01</p>
+        <h2 class="outro-title">The world<br />caught up.</h2>
+        <p class="outro-sub">The Stratocaster was a decade ahead of its time.<br />The story that began in 1954 continues into the sixties.</p>
+        <a class="next-card" href="#" data-soon>
+          <span class="next-label">Next chapter</span>
+          <span class="next-year">1960s</span>
+          <span class="next-soon">Coming soon →</span>
+        </a>
+      </div>
+      <footer class="credits">
+        <p><b>GEARSHED</b> — Web Design II project</p>
+        <p>3D Model: “Stratocaster” by <a href="https://sketchfab.com/3d-models/stratocaster-2a29975b708b4106a84d5b51e3ede608" target="_blank" rel="noopener">varin</a> (Sketchfab), licensed under <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></p>
+        <p>Text reference: Fender, “The History of the Fender Stratocaster: The 1950s” · fuzzfaced.net, “Stratocaster Origin”</p>
+      </footer>
+    </section>
+  </main>
+
+  <div id="toast" role="status"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
