@@ -1,0 +1,1438 @@
+/* =========================================================
+   GEARSHED — Timeline
+   시대가 번갈아 오고, 경계는 입자처럼 번진다.
+   챕터는 아키타입에 따라 전혀 다른 레이아웃으로 그려진다.
+   ========================================================= */
+
+:root {
+  --cream: #ece9e1;
+  --cream-2: #e2ded3;
+  --ink: #15130f;
+  --ink-2: #4b453c;
+  --ink-3: #8a8277;
+  --night: #0b0a09;
+  --night-2: #16130f;
+  --paper-on-night: #d8d2c6;
+  --dim-on-night: #8a8075;
+  --accent: #c4621c;
+
+  --f-title: "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+  --f-serif: "Instrument Serif", Georgia, serif;
+
+  --gutter: clamp(18px, 4vw, 72px);
+  --ease: cubic-bezier(.22, 1, .36, 1);
+
+  --noise-fine: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='1' seed='3'/><feColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.5 0 0 0 -0.08'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+* { box-sizing: border-box; }
+html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--cream); color: var(--ink);
+  font-family: var(--f-serif); font-size: 21px; line-height: 1.3;
+  overflow-x: hidden;
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+img { display: block; max-width: 100%; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+a { color: inherit; }
+
+/* ===== 고정 레이어 ===== */
+#grain {
+  position: fixed; inset: 0; z-index: 80; pointer-events: none;
+  opacity: .22; mix-blend-mode: multiply;
+  background-image: var(--noise-fine); background-size: 200px;
+}
+body.on-night #grain { mix-blend-mode: screen; opacity: .10; }
+
+/* ===== 입장 시퀀스 =====
+   검정 플레이트 위에서 연도가 슬롯머신처럼 거꾸로 돌다가,
+   같은 자리에서 그대로 Timeline 타이틀로 풀린다. */
+#boot {
+  position: fixed; inset: 0; z-index: 200; pointer-events: none;
+  background: rgba(11, 10, 9, 1);
+  transition: background-color 1s cubic-bezier(.45, 0, .2, 1);
+}
+body.booting { overflow: hidden; }
+body.booting .intro { z-index: 201; }
+body.booting.boot-morph #boot { background-color: rgba(11, 10, 9, 0); }
+body.booted #boot { display: none; }
+
+/* 암전 중에는 타이틀만 크림색으로 떠 있고, 전환과 함께 잉크로 가라앉는다 */
+.intro-title { transition: color 1s cubic-bezier(.45, 0, .2, 1); }
+body.booting .intro-title { color: var(--paper-on-night); }
+body.booting.boot-morph .intro-title { color: var(--ink); }
+
+/* 릴을 깔기 전에 타이틀이 한 번 비치지 않게 */
+body.booting .t-line { visibility: hidden; }
+body.booting.boot-ready .t-line { visibility: visible; }
+
+/* 글자 한 칸 = 세로로 흐르는 릴 하나 */
+/* 칸 높이는 JS가 정수 px 로 박아 준다 — em 이 소수로 떨어지면
+   칸이 수십 개 쌓이는 동안 어긋나서 옆 숫자가 비친다 */
+.t-line .slot {
+  display: inline-block; vertical-align: top; overflow: hidden;
+  width: var(--w, auto); height: var(--cell, 1em);
+  transition: width var(--ww, .76s) var(--ease) var(--wd, 0s);
+}
+.t-line .slot-strip {
+  display: block; letter-spacing: 0; font-variant-numeric: tabular-nums;
+  transform: translate3d(0, calc(var(--i, 0) * var(--cell, 1em) * -1), 0);
+  transition: transform var(--dur, 0s) var(--sp-ease, linear) var(--d, 0s);
+  will-change: transform;
+}
+.t-line .slot-strip > i { display: block; height: var(--cell, 1em); line-height: var(--cell, 1em); font-style: normal; }
+.t-line.is-done .slot { overflow: visible; width: auto; transition: none; }
+
+/* 전환에 맞춰 뒤따라 들어오는 요소들 */
+.boot-fade { transition: opacity .95s ease var(--fi, 0s); }
+.boot-rise { transition: opacity .95s ease var(--fi, 0s), transform 1.05s var(--ease) var(--fi, 0s); }
+body.booting .boot-fade { opacity: 0; }
+body.booting .boot-rise { opacity: 0; transform: translate3d(0, 16px, 0); }
+body.booting.boot-morph .boot-fade { opacity: 1; }
+body.booting.boot-morph .boot-rise { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .t-line .slot-strip, .t-line .slot, .boot-fade, .boot-rise, .intro-title, #boot { transition: none; }
+}
+
+/* ===== 상단바 ===== */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 60;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px var(--gutter);
+  font-family: var(--f-title); mix-blend-mode: difference; color: #fff;
+}
+.brand { font-weight: 800; font-size: 19px; letter-spacing: -.02em; text-decoration: none; }
+.brand span { opacity: .55; }
+.topnav { display: flex; gap: 18px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+.topnav a { text-decoration: none; opacity: .5; transition: opacity .3s; }
+.topnav a:hover, .topnav a.is-on { opacity: 1; }
+.lang { display: flex; gap: 8px; font-size: 12px; letter-spacing: .06em; }
+.lang button { opacity: .35; }
+.lang button.is-on { opacity: 1; }
+.lang button:disabled { cursor: default; opacity: .2; }
+
+/* 현재 연도 카운터 */
+#nowyear {
+  position: fixed; left: var(--gutter); bottom: 22px; z-index: 58;
+  font-family: var(--f-title); font-weight: 700; font-size: 13px;
+  letter-spacing: .02em; font-variant-numeric: tabular-nums;
+  mix-blend-mode: difference; color: #fff;
+  opacity: 0; transition: opacity .6s var(--ease);
+}
+body.past-intro #nowyear { opacity: .9; }
+
+/* ===== 챕터 레일 ===== */
+#rail {
+  position: fixed; right: var(--gutter); top: 50%; transform: translateY(-50%);
+  z-index: 55; font-family: var(--f-title); max-height: 86vh;
+  mix-blend-mode: difference; color: #fff;
+}
+#rail ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; justify-items: end; }
+#rail button {
+  display: grid; grid-template-columns: auto auto; gap: 10px; align-items: baseline;
+  padding: 0; text-align: right;
+  font-size: 10.5px; line-height: 1.18; font-weight: 600; letter-spacing: -.01em;
+  opacity: .3; transition: opacity .25s;
+}
+#rail button .nm {
+  max-width: 0; overflow: hidden; white-space: nowrap; text-align: right;
+  opacity: 0; transition: max-width .4s var(--ease), opacity .3s; font-weight: 500;
+}
+#rail button .yr { font-variant-numeric: tabular-nums; }
+#rail:hover button .nm, #rail li.is-on button .nm { max-width: 230px; opacity: .85; }
+#rail button:hover { opacity: .75; }
+#rail li.is-on button { opacity: 1; }
+@media (max-width: 1100px) { #rail { display: none; } }
+
+#rail, #progress { opacity: 0; transition: opacity .7s var(--ease); pointer-events: none; }
+body.past-intro #rail, body.past-intro #progress { opacity: 1; pointer-events: auto; }
+body.past-intro .scroll-cue { opacity: 0; }
+.scroll-cue { transition: opacity .5s; }
+
+#progress { position: fixed; left: 0; right: 0; bottom: 0; height: 2px; z-index: 60; mix-blend-mode: difference; }
+#progress span { display: block; height: 100%; background: #fff; transform: scaleX(0); transform-origin: left; }
+
+/* ===== 인트로 ===== */
+.intro { min-height: 100svh; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 var(--gutter) 9vh; position: relative; }
+.eyebrow {
+  display: flex; align-items: center; gap: 10px; margin: 0 0 22px;
+  font-family: var(--f-title); font-size: 12px; font-weight: 500;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2);
+}
+.eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.intro-title {
+  font-family: var(--f-title); font-weight: 800;
+  font-size: clamp(68px, 17.5vw, 290px); line-height: .84; letter-spacing: -.055em;
+  margin: 0 0 28px; max-width: none;
+}
+.intro-title > .t-line { display: block; overflow: hidden; }
+.intro-sub { max-width: 46ch; margin: 0 0 42px; font-size: 23px; color: var(--ink-2); }
+.intro-stats { display: flex; gap: 54px; margin: 0; padding-top: 20px; border-top: 1px solid rgba(21,19,15,.18); }
+.intro-stats div { display: flex; flex-direction: column; gap: 4px; }
+.intro-stats dt { font-family: var(--f-title); font-size: 10.5px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+.intro-stats dd { margin: 0; font-family: var(--f-title); font-weight: 700; font-size: 26px; letter-spacing: -.03em; }
+.scroll-cue {
+  position: absolute; right: var(--gutter); bottom: 9vh;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  font-family: var(--f-title); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-3);
+}
+.scroll-cue i { width: 1px; height: 64px; background: rgba(21,19,15,.2); position: relative; overflow: hidden; }
+.scroll-cue i::after { content: ""; position: absolute; inset: -40% 0 auto; height: 40%; background: var(--ink); animation: cue 1.9s var(--ease) infinite; }
+@keyframes cue { to { top: 100%; } }
+
+/* ===== 시대 ===== */
+.era { position: relative; padding: 2vh 0 0; }
+.era--light { background: var(--cream); color: var(--ink); }
+.era--dark { background: var(--night); color: var(--paper-on-night); }
+
+/* 시대 경계 */
+.seam { position: relative; height: 62vh; margin-top: -1px; }
+.seam .seam-fill {
+  position: absolute; inset: 0;
+  --edge: calc(var(--r, 0) * 118% - 9%);
+  -webkit-mask-image: linear-gradient(to top, #000 var(--edge), transparent calc(var(--edge) + 20%));
+  mask-image: linear-gradient(to top, #000 var(--edge), transparent calc(var(--edge) + 20%));
+}
+.seam[data-to="dark"] { background: var(--cream); }
+.seam[data-to="dark"] .seam-fill { background: var(--night); }
+.seam[data-to="light"] { background: var(--night); }
+.seam[data-to="light"] .seam-fill { background: var(--cream); }
+
+/* ===== 실루엣 ===== */
+.sil { width: 100%; height: 100%; overflow: visible; }
+.sil g { fill: currentColor; }
+.sil-body { opacity: .15; }
+.sil-panel { opacity: .26; }
+.sil-cut   { opacity: .5; }
+.sil-knob  { opacity: .32; }
+.sil-wrap { position: relative; }
+.sil-wrap[data-kind]::after {
+  content: attr(data-kind); position: absolute; left: 50%; bottom: -24px; transform: translateX(-50%);
+  font-family: var(--f-title); font-size: 9.5px; font-weight: 600; letter-spacing: .18em;
+  text-transform: uppercase; opacity: .3; white-space: nowrap;
+}
+/* 도면 모드 — 선만 남긴다. 겹친 윤곽이 작도선처럼 보인다 */
+.plate .sil g { fill: none; stroke: currentColor; }
+.plate .sil-body { stroke-width: 2.5; opacity: .5; }
+.plate .sil-panel, .plate .sil-cut, .plate .sil-knob { stroke-width: 1.6; opacity: .38; }
+
+/* ===== 챕터 공통 ===== */
+.chapter { position: relative; padding: 0 var(--gutter); }
+.ch-head { position: relative; z-index: 4; max-width: 1500px; margin: 0 auto; padding: 12vh 0 6vh; }
+/* 별명은 본문과 같은 서체로 — 타이틀에서 한 단 내려앉는다 */
+.ch-nick {
+  display: block; margin-top: 10px;
+  font-family: var(--f-serif); font-style: normal; font-weight: 400;
+  font-size: 21px; line-height: 1.32; letter-spacing: 0; opacity: .55;
+}
+.ch-brand { /* 레이아웃 재작업용 훅 — 지금은 타이틀과 같은 조판 */ }
+.ch-head h2 { font-family: var(--f-title); font-weight: 700; font-size: clamp(38px, 5.2vw, 86px); line-height: .95; letter-spacing: -.045em; margin: 0 0 16px; max-width: 16ch; }
+.ch-meta { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 0; font-family: var(--f-title); font-size: 11.5px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; opacity: .5; }
+.ch-meta .cat { color: var(--accent); opacity: .9; }
+
+/* ===== 챕터 들머리 =====
+   헤드가 시계 방향으로 90° 누운 채 좌측 바깥에서 끌려 들어온다.
+   넥은 화면 왼쪽으로 길게 이어지고, 그 위로 타이틀 → 별명 → 메타가 차례로 떠오른다.
+   --p : 0 들어가 있음 → 1 다 나옴 (스크롤이 먹인다, 헤더에 걸린다) */
+.chapter .ch-head.has-entry {
+  /* 눕힌 사진의 길이(2·iw)가 헤드 끝(--end)보다 항상 길어야 넥이 왼쪽 가장자리에서 끊기지 않는다 */
+  --iw: min(max(36vw, 40vh), 72vh);   /* 세워 둔 사진의 폭 = 눕혔을 때의 높이 */
+  --end: min(66vw, calc(var(--iw) * 2 - 4vw));   /* 다 나왔을 때 헤드 끝이 닿는 x */
+  --k1: clamp(0, calc((var(--p, 0) - .72) * 3.6), 1);   /* 타이틀 — 헤드가 다 나온 뒤에 */
+  --k2: clamp(0, calc((var(--p, 0) - .80) * 5), 1);     /* 별명 */
+  --k3: clamp(0, calc((var(--p, 0) - .86) * 7.2), 1);   /* 메타 */
+  --k4: 0;                                               /* 연도 — JS 가 시간으로 먹인다 */
+  --h: 86svh;
+  --yfs: clamp(200px, 38vw, 600px);                      /* 연도 글자 크기 */
+  --y: calc(var(--yfs) * .8);                            /* 연도가 차지하는 높이 */
+  /* 넥 중심선. 연도 윗단부터 헤드 아랫단까지가 상자 한가운데 오도록 푼 값 */
+  --c: calc((var(--h) + var(--y) - var(--iw) * .105) / 2);
+  display: flex; flex-direction: column; justify-content: flex-end;
+  max-width: none; min-height: var(--h);
+  padding: 0 var(--gutter) calc(var(--h) - var(--c) + var(--iw) * .165);   /* 글 상자의 바닥 = 넥의 윗선 */
+}
+.ch-entry {
+  position: absolute; top: 0; bottom: 0;
+  left: calc(50% - 50vw); width: 100vw;
+  z-index: 2; overflow: hidden; pointer-events: none;
+}
+.ch-entry img {
+  position: absolute; left: 0; top: var(--c);
+  width: var(--iw); height: auto; max-width: none;
+  transform-origin: 0 0;
+  /* 먼저 90° 눕히고(오른쪽이 헤드), 그다음 옮긴다. 넥 중심(폭의 54%)이 중앙선에 오도록 맞춘다 */
+  transform: translate3d(calc(var(--end) * var(--p, 0)), calc(var(--iw) * -.54), 0) rotate(90deg);
+  will-change: transform;
+}
+/* 글은 이미지 뒤에서 솟는다. 상자의 바닥선(= 넥의 윗선) 아래는 잘라 내서,
+   올라오기 전에는 넥 뒤에 가려져 있는 것처럼 보인다. */
+.ch-head.has-entry .ch-title {
+  position: relative; z-index: 1; padding-bottom: 20px;
+  clip-path: inset(-60vh -60vw 0 -60vw);
+}
+.ch-head.has-entry h2 {
+  max-width: none; margin: 0; font-size: clamp(34px, 4.6vw, 72px);
+  transform: translate3d(0, calc((1 - var(--k1)) * 330px), 0);
+}
+.ch-head.has-entry .ch-brand { display: block; }
+.ch-head.has-entry .ch-nick {
+  opacity: 1; margin-top: 12px;
+  transform: translate3d(0, calc((1 - var(--k2)) * 60px), 0);
+}
+.ch-head.has-entry .ch-meta {
+  margin-top: 14px; opacity: .6;
+  transform: translate3d(0, calc((1 - var(--k3)) * 170px), 0);
+}
+@media (max-width: 900px) {
+  .chapter .ch-head.has-entry { --iw: 60vw; --end: 94vw; --h: 76svh; }
+}
+.ch-bgyear {
+  position: absolute; left: 50%; top: 9vh; transform: translateX(-50%);
+  font-family: var(--f-title); font-weight: 800; font-size: clamp(150px, 30vw, 460px);
+  line-height: .8; letter-spacing: -.07em; pointer-events: none; color: currentColor; opacity: .07;
+}
+
+.block { max-width: 46ch; opacity: .25; transform: translateY(14px); transition: opacity .7s var(--ease), transform .9s var(--ease); }
+.block.is-near { opacity: 1; transform: none; }
+.block h3 { font-family: var(--f-title); font-weight: 700; font-size: clamp(22px, 2.3vw, 34px); line-height: 1.05; letter-spacing: -.035em; margin: 0 0 14px; }
+.block p { margin: 0 0 14px; font-size: 21px; line-height: 1.32; }
+.block p:last-child { margin-bottom: 0; }
+.block .lede { font-family: var(--f-serif); }
+.block i, .block em { font-family: var(--f-serif); font-style: italic; }
+.era--dark .block { color: var(--paper-on-night); }
+
+/* 미디어 메모 (실물 들어오면 사라짐) */
+.mnote { display: none; margin-top: 12px; font-family: var(--f-title); font-size: 11px; line-height: 1.45; opacity: .32; max-width: 38ch; }
+body.show-notes .mnote { display: block; }
+
+/* ===== 아키타입 1 : hero =====
+   화면 전체가 이미지. 텍스트가 그 위를 입자로 지나간다 */
+.chapter--hero { padding: 0; }
+.chapter--hero .ch-head { padding: 12vh var(--gutter) 4vh; }
+.hero-wrap { position: relative; }
+.hero-pin { position: sticky; top: 0; height: 100svh; overflow: hidden; display: grid; place-items: center; }
+.hero-layers { position: absolute; inset: 0; }
+.hero-layer {
+  position: absolute; inset: 0; margin: 0;
+  display: grid; align-items: center; justify-items: end;
+  padding-right: clamp(18px, 6vw, 110px);
+  transform: translate3d(0, var(--ty, 0px), 0) scale(var(--z, 1));
+  will-change: transform;
+}
+.hero-layer .hero-img {
+  max-width: min(44vw, 64vh); max-height: 74vh;
+  width: auto; height: auto; object-fit: contain;
+  filter: blur(calc(max(0px, 0.55 - var(--r, 0)) * 5px));
+}
+.hero-layer .hero-img--cut { max-width: min(34vw, 78vh); max-height: 86vh; }
+.hero-layer.is-base { z-index: 1; }
+.hero-layer.is-video { z-index: 2; }
+.hero-video {
+  width: min(52vw, 92vh); aspect-ratio: 16 / 9;
+  background: #000; overflow: hidden; border-radius: 2px;
+  box-shadow: 0 30px 90px rgba(0,0,0,.35);
+}
+.hero-video iframe { width: 100%; height: 100%; display: block; border: 0; }
+.hero-cap {
+  position: absolute; right: clamp(18px, 6vw, 110px); bottom: 4vh;
+  margin: 0; max-width: 40ch; text-align: right;
+  font-family: var(--f-title); font-size: 11.5px; line-height: 1.5;
+  letter-spacing: .04em; opacity: .5; pointer-events: none; z-index: 4;
+}
+.hero-sil .sil-wrap { width: min(48vw, 56vh); height: 86vh; }
+.chapter--hero .sil-body { opacity: .2; }
+.hero-scrim { position: absolute; inset: 0; pointer-events: none; }
+.era--light .hero-scrim { background: linear-gradient(to right, var(--cream) 0%, rgba(236,233,225,.97) 34%, rgba(236,233,225,.72) 46%, rgba(236,233,225,0) 60%); }
+.era--dark .hero-scrim { background: linear-gradient(to right, var(--night) 0%, rgba(11,10,9,.97) 34%, rgba(11,10,9,.72) 46%, rgba(11,10,9,0) 60%); }
+.hero-steps { position: relative; z-index: 3; pointer-events: none; padding: 0 var(--gutter); max-width: 1500px; margin: 0 auto; }
+.hero-step { min-height: 100svh; display: grid; align-items: center; justify-items: start; }
+.hero-step .block { max-width: 38ch; opacity: 1; transform: none; pointer-events: auto; }
+
+/* ===== 아키타입 2 : sidearm =====
+   넥이 먼저, 옆에서 밀려 들어온다 */
+.chapter--sidearm .ch-body {
+  position: relative; max-width: 1500px; margin: 0 auto;
+  display: grid; grid-template-columns: minmax(0, 46ch) minmax(0, 1fr);
+  gap: clamp(32px, 5vw, 90px); align-items: start;
+}
+.chapter--sidearm .ch-text { display: grid; gap: 8vh; padding: 2vh 0 22vh; }
+.side-stage { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+.side-sil {
+  position: absolute; top: 50%; right: 0; width: 185%; height: 40vh;
+  transform: translate3d(calc(var(--px, 1) * 102%), -50%, 0) rotate(-4deg);
+  transform-origin: right center; will-change: transform;
+}
+.side-sil .sil-wrap { width: 100%; height: 100%; }
+.chapter--sidearm .side-stage { margin-right: calc(var(--gutter) * -1); }
+.side-rule {
+  position: absolute; top: 50%; left: 0; right: 0; height: 1px;
+  background: currentColor; opacity: .12;
+}
+
+/* ===== 아키타입 3 : contour =====
+   본문이 바디 외곽을 따라 흐른다 */
+.chapter--contour .ch-body { max-width: 1180px; margin: 0 auto; padding-bottom: 18vh; }
+.contour-float {
+  float: right; width: clamp(230px, 28vw, 380px); height: 104vh;
+  margin: 1vh 0 4vh clamp(20px, 3vw, 52px);
+  shape-margin: 22px; position: relative;
+}
+.contour-float .sil-wrap { height: 100%; }
+.chapter--contour .block { max-width: none; }
+.chapter--contour .ch-text > * + * { margin-top: 6vh; }
+.contour-end { clear: both; }
+
+/* ===== 아키타입 4 : plate =====
+   도면을 읽는 화면 */
+.chapter--plate .ch-body {
+  max-width: 1500px; margin: 0 auto; display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 44ch);
+  gap: clamp(32px, 5vw, 90px); align-items: start; padding-bottom: 16vh;
+}
+.plate-stage { position: sticky; top: 10vh; height: 80vh; }
+.plate-frame {
+  position: relative; width: 100%; height: 100%; display: grid; place-items: center;
+  border: 1px solid currentColor; border-color: color-mix(in srgb, currentColor 28%, transparent);
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, currentColor 7%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, currentColor 7%, transparent) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+.plate-frame .sil-wrap { width: 62%; height: 78%; }
+.plate-tag {
+  position: absolute; left: 14px; bottom: 12px;
+  font-family: var(--f-title); font-size: 10px; font-weight: 600;
+  letter-spacing: .18em; text-transform: uppercase; opacity: .45;
+}
+.plate-tick { position: absolute; font-family: var(--f-title); font-size: 9px; letter-spacing: .14em; opacity: .35; }
+.chapter--plate .ch-text { display: grid; gap: 7vh; padding-top: 2vh; }
+
+/* ===== 아키타입 5 : quiet ===== */
+.chapter--quiet .ch-body {
+  max-width: 1500px; margin: 0 auto; display: grid;
+  grid-template-columns: minmax(0, 46ch) minmax(0, 1fr);
+  gap: clamp(32px, 6vw, 110px); align-items: start; padding-bottom: 16vh;
+}
+.chapter--quiet .ch-text { display: grid; gap: 7vh; padding: 2vh 0 8vh; }
+.quiet-stage { position: sticky; top: 12vh; height: 76vh; display: grid; place-items: center; }
+.quiet-stage .sil-wrap { width: 76%; height: 100%; }
+
+/* ===== 콜로폰 ===== */
+#colophon { background: var(--night); color: var(--paper-on-night); padding: 16vh var(--gutter) 10vh; }
+.colophon-inner { max-width: 760px; margin: 0 auto; }
+#colophon h2 { font-family: var(--f-title); font-weight: 700; font-size: 40px; letter-spacing: -.04em; margin: 0 0 20px; }
+#colophon p { color: var(--dim-on-night); max-width: 54ch; }
+#colophon .small { font-family: var(--f-title); font-size: 13px; opacity: .6; margin-top: 30px; }
+
+body.is-loading #tl { opacity: 0; }
+#tl { opacity: 1; transition: opacity .8s ease; }
+
+/* ===== 반응형 ===== */
+@media (max-width: 1000px) {
+  body { font-size: 19px; }
+  .chapter--sidearm .ch-body, .chapter--plate .ch-body, .chapter--quiet .ch-body { grid-template-columns: 1fr; gap: 28px; }
+  .side-stage, .plate-stage, .quiet-stage { position: relative; top: 0; height: 46vh; order: -1; }
+  .contour-float { float: none; width: 100%; height: 42vh; margin: 0 0 4vh; shape-outside: none !important; }
+  .contour-float .sil-wrap { position: relative; top: 0; height: 100%; }
+  .hero-step { min-height: 86svh; }
+  .hero-sil .sil-wrap { width: 72vw; }
+  .block { max-width: none; opacity: 1; transform: none; }
+  .seam { height: 44vh; }
+  .intro-stats { gap: 28px; flex-wrap: wrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .block { opacity: 1; transform: none; }
+  .scroll-cue i::after { animation: none; }
+  .hero-sil, .side-sil, .rack-track { transform: none !important; }
+}
+
+/* 영상 소리 토글 — 자동재생은 음소거라 소리는 사용자가 켠다 */
+.hero-sound {
+  position: absolute; right: clamp(18px, 6vw, 110px); bottom: 11vh; z-index: 5;
+  padding: 9px 16px; border: 1px solid currentColor; border-radius: 999px;
+  font-family: var(--f-title); font-size: 10.5px; font-weight: 600;
+  letter-spacing: .16em; text-transform: uppercase; opacity: .55;
+  transition: opacity .25s, background-color .25s, color .25s;
+  pointer-events: auto;
+}
+.hero-sound:hover { opacity: 1; }
+.hero-sound.is-on { opacity: 1; background: currentColor; }
+.hero-sound.is-on::after { content: ""; }
+.era--light .hero-sound.is-on { color: var(--ink); }
+.era--light .hero-sound.is-on { background: var(--ink); color: var(--cream); }
+.era--dark .hero-sound.is-on { background: var(--paper-on-night); color: var(--night); }
+
+/* ===== 한국어 · 일본어 조판 ===== */
+:root[lang="ko"] {
+  --f-serif: "Noto Serif KR", "AppleMyungjo", "Apple SD Gothic Neo", serif;
+  --f-title: "Inter Tight", "Pretendard", "Apple SD Gothic Neo", sans-serif;
+}
+:root[lang="ja"] {
+  --f-serif: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --f-title: "Inter Tight", "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+/* 한국어는 어절 단위로 끊어야 읽힌다 */
+:root[lang="ko"] .block p,
+:root[lang="ko"] .intro-sub,
+:root[lang="ko"] #colophon p { word-break: keep-all; line-break: strict; }
+/* CJK는 라틴 본문보다 조금 작고 행간이 넓어야 편하다 */
+:root[lang="ko"] .block p,
+:root[lang="ja"] .block p,
+:root[lang="ko"] .ch-nick,
+:root[lang="ja"] .ch-nick { font-size: 18.5px; line-height: 1.78; }
+:root[lang="ko"] .block,
+:root[lang="ja"] .block { max-width: 34em; }
+:root[lang="ko"] .hero-step .block,
+:root[lang="ja"] .hero-step .block { max-width: 28em; }
+:root[lang="ja"] .block p { letter-spacing: .01em; }
+
+/* ===== 페이드 ===== */
+.fade { opacity: var(--r, 0); }
+.hero-layer > .hero-img,
+.hero-layer > .hero-video { opacity: var(--r, 0); }
+.hero-step .block.fade { opacity: var(--r, 0); }
+
+/* ===== 등장 연출 =====
+   --r(0→1) 하나가 디졸브와 움직임을 같이 몬다.
+   어느 쪽에서 들어오느냐에 따라 디졸브 방향도 맞춰야 한다. */
+
+.hero-layer > .hero-img,
+.hero-layer > .hero-video { will-change: transform; }
+
+/* 헤드부터 솟아오른다 */
+.hero-layer[data-motion="rise"] > .hero-img {
+  transform: translate3d(0, calc((1 - var(--r, 0)) * 34%), 0);
+}
+/* 위에서 내려앉는다 */
+.hero-layer[data-motion="drop"] > .hero-img {
+  transform: translate3d(0, calc((1 - var(--r, 0)) * -26%), 0);
+}
+/* 오른쪽에서 왼쪽으로 튀어나온다 */
+.hero-layer[data-motion="swipe-right"] > .hero-img {
+  transform: translate3d(calc((1 - var(--r, 0)) * 52%), 0, 0)
+             rotate(calc((1 - var(--r, 0)) * 3deg));
+}
+/* 왼쪽에서 오른쪽으로 */
+.hero-layer[data-motion="swipe-left"] > .hero-img {
+  transform: translate3d(calc((1 - var(--r, 0)) * -52%), 0, 0)
+             rotate(calc((1 - var(--r, 0)) * -3deg));
+}
+/* 비스듬히 기울어져 들어온다 */
+.hero-layer[data-motion="tilt"] > .hero-img {
+  transform: translate3d(calc((1 - var(--r, 0)) * 18%), calc((1 - var(--r, 0)) * 10%), 0)
+             rotate(calc((1 - var(--r, 0)) * -8deg));
+}
+/* 문서류는 조용히 밀려 나온다 */
+.hero-layer[data-motion="push"] > .hero-img,
+.hero-layer[data-motion="push"] > .hero-video {
+  transform: scale(calc(0.88 + var(--r, 0) * 0.12));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-layer > .hero-img,
+  .hero-layer > .hero-video { transform: none !important; }
+}
+
+/* 연도는 글 뒤에 겹쳐 깔리고, 글 다음 순서로 같은 선 뒤에서 솟는다 */
+.ch-bgyear--in {
+  --cell: .8em;
+  left: -.03em; top: auto; bottom: 0; z-index: -1;
+  font-size: var(--yfs); line-height: var(--cell); height: var(--cell); white-space: nowrap;
+  transform: translate3d(0, calc((1 - var(--k4)) * 105%), 0);
+}
+
+/* ===== 무대 — 풀샷을 걷고 몸통 반쪽 두 장이 모서리에서 들어온다 ===== */
+.has-stage .hero-scrim { display: none; }
+/* 첫 블록이 무대에 닿는 순간 같이 보이도록 핀 높이만큼 끌어올린다 */
+.has-stage .hero-steps { margin-top: -100svh; }
+.has-stage .hero-step { justify-items: center; text-align: center; }
+.has-stage .hero-step .block { max-width: min(44ch, 90vw); }
+.stage-img {
+  position: absolute; height: var(--sh, 118svh); width: auto; max-width: none;
+  pointer-events: none; will-change: transform;
+}
+/* 좌상단: 이미지 중심을 왼쪽 가장자리에 두어 오른쪽 반쪽만 보이고, 위에서 내려온다 */
+.stage-tl {
+  left: 0; bottom: var(--so, -2svh);
+  transform: translate3d(calc(-50% - var(--x, 0) * 50%), calc((1 - var(--s1, 0)) * -105%), 0);
+}
+/* 우하단: 180° 돌려 몸통이 위, 넥이 아래. 오른쪽 가장자리에 중심을 두어 왼쪽 반쪽만 보이고, 아래에서 솟는다 */
+.stage-br {
+  right: 0; top: var(--so, -2svh);
+  transform: translate3d(calc(50% + var(--x, 0) * 50%), calc((1 - var(--s2, 0)) * 105%), 0) rotate(180deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage-tl { transform: translate3d(-50%, 0, 0); }
+  .stage-br { transform: translate3d(50%, 0, 0) rotate(180deg); }
+}
+
+.has-stage .hero-step .block { transition: color .5s var(--ease); }
+.has-stage.is-full-on .hero-step .block { color: #f2efe8; }
+
+/* 전면 사진 + 찢긴 종이 경계 */
+.stage-img { z-index: 1; }
+.stage-full { position: absolute; inset: 0; z-index: 0; overflow: hidden; --paper: var(--cream); }
+.stage-full[hidden] { display: none; }
+.stage-full-img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  transform: translate3d(0, calc(var(--q, 0) * -5vh), 0) scale(1.1);
+  will-change: transform;
+}
+.stage-full-dim { position: absolute; inset: 0; background: rgba(11, 10, 9, .42); }
+.stage-tear { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.era--dark .stage-full { --paper: var(--night); }
+
+/* ===== 가로 무대 ===== */
+.has-hx .hero-wrap { height: calc(var(--hx-total) * 100svh); }
+.hx-snap { position: absolute; left: 0; width: 1px; height: 0; pointer-events: none; }
+.has-hx .hero-pin { --hx: 0; }
+.has-hx .stage-full { transform: translate3d(calc(var(--hx, 0) * -100%), calc(var(--hy, 0) * 100%), 0); }
+.hx { position: absolute; inset: 0; overflow: hidden; z-index: 3; pointer-events: none; }
+.hx-track { position: absolute; inset: 0; }
+.hx-panel {
+  position: absolute; inset: 0; transform-origin: 100% 50%;   /* 회전축 = 최우측 중앙 */
+  transform: translate3d(calc(var(--tx, 0) * 100%), calc(var(--ty, 0) * 100%), 0) rotate(calc(var(--rot, 0) * 1deg));
+  opacity: var(--op, 1); will-change: transform, opacity;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center;
+  gap: clamp(24px, 4vw, 80px); padding: 0 var(--gutter);
+}
+.hx-panel:not(.hx-full) { background: var(--cream); }
+.era--dark .hx-panel:not(.hx-full) { background: var(--night); }
+.hx-full { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+.hx-full .block { color: #f2efe8; max-width: min(44ch, 90vw); }
+.hx-text { pointer-events: auto; max-width: 44ch; }
+.hx-text .block { opacity: 1; transform: none; }
+.hx-full .hx-text .block.fade { opacity: var(--r, 0); }
+.side-r .hx-media { order: 2; justify-self: end; }
+.side-r .hx-text { justify-self: start; }
+.hx-panel:not(.side-r) .hx-text { justify-self: start; }
+.hx-media { margin: 0; height: 86%; display: flex; align-items: center; justify-content: center; position: relative; min-width: 0; }
+.hx-media img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; }
+.hx-cutout img { height: 88svh; width: auto; filter: drop-shadow(0 2.4svh 3svh rgba(21, 19, 15, .28)); }
+figure.hx-sheet img, figure.hx-sheets img { box-shadow: 0 2svh 4svh rgba(21, 19, 15, .3), 0 0 0 1px rgba(21, 19, 15, .08); background: #fff; }
+figure.hx-sheet img { height: min(84svh, 40vw); width: auto; transform: rotate(-1.6deg); }
+figure.hx-sheets { gap: 0; }
+figure.hx-sheets img { width: min(22vw, 48svh); height: auto; }
+figure.hx-sheets img:first-child { transform: translate(calc(1vw - var(--g1, 0) * 4vw), calc(1svh + var(--g1, 0) * 125svh)) rotate(calc(-3.5deg - var(--g1, 0) * 16deg)); }
+figure.hx-sheets img:last-child { transform: translate(calc(-1vw + var(--g1, 0) * 5vw), calc(3svh + var(--g1, 0) * 132svh)) rotate(calc(2.8deg + var(--g1, 0) * 18deg)); margin-left: -4vw; }
+.hx-photo img { width: 100%; height: auto; max-height: 80svh; object-fit: cover; box-shadow: 0 2svh 4svh rgba(21, 19, 15, .3); }
+.hx-video { width: 100%; max-width: 100%; height: auto; aspect-ratio: 16 / 9; background: #000; box-shadow: 0 2svh 4svh rgba(21, 19, 15, .3); }
+.hx-video .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hx-video .hero-sound { position: absolute; right: 12px; bottom: 12px; z-index: 2; }
+@media (max-width: 900px) {
+  .hx-panel { grid-template-columns: 1fr; grid-template-rows: 46% auto; align-content: center; padding-top: 6svh; }
+  .side-r .hx-media { order: 0; justify-self: center; }
+  .hx-cutout img { height: 42svh; }
+  .hx-sheet img { height: 42svh; }
+  figure.hx-sheets img { height: 38svh; }
+}
+
+/* 도면 패널 — 글과 도면 사이를 벌리고, 도면이 떨어진 자리에 풀샷이 위에서 내려온다 */
+.hx-panel.hx-sheets { grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); column-gap: clamp(48px, 9vw, 180px); }
+.hx-then {
+  position: absolute; z-index: 1; pointer-events: none;
+  height: var(--th, 108.5svh); width: auto; max-width: none; top: var(--tt, -26.5svh);   /* 자르지 않는다 — 몸통 아랫단(이미지 아래 여백 포함 82svh)이 화면 78% 선에 닿게 올린다 */
+  left: calc(var(--gutter) + 22vw - var(--tw, 35.9svh));
+  transform: translate3d(0, calc((1 - var(--g2, 0)) * -108svh), 0);   /* 몸통 아랫단이 막 화면 위에 걸린 자리에서 출발 */
+  filter: drop-shadow(0 2.4svh 3svh rgba(21, 19, 15, .28));
+  will-change: transform;
+}
+@media (max-width: 900px) { .hx-then { height: 87.5svh; top: -7.5svh; left: calc(50% - 28.9svh); } }
+
+/* 전면 사진 위의 글 — 인물 오른쪽, 화면 왼쪽 38% 지점에 가운데를 맞춘다 */
+.hx-full { justify-items: start; }
+.hx-full .hx-text { width: 19vw; max-width: none; margin-left: calc(28.5vw - var(--gutter)); justify-self: start; }
+.hx-full .hx-text .block { max-width: none; }
+@media (max-width: 900px) {
+  .hx-full .hx-text { width: min(86vw, 40ch); margin-left: 0; justify-self: center; }
+}
+
+/* 전면 사진 위의 글 — 좌측 정렬, 더 크게, 더 왼쪽으로 */
+.hx-full { text-align: left; }
+.hx-full .hx-text { width: 25vw; margin-left: calc(11vw - var(--gutter)); text-align: left; }
+:root[lang] .hx-full .block p { font-size: clamp(22px, 1.55vw, 32px); line-height: 1.5; text-align: left; }
+@media (max-width: 900px) {
+  .hx-full .hx-text { width: min(86vw, 40ch); margin-left: 0; }
+}
+
+/* 헤드 이미지 — 1.2배로 키워 헤드는 위쪽에 두고, 넥은 화면 아래로 흘러나가 끝이 보이지 않게 한다 */
+.hx-bleed .hx-media { align-items: flex-start; height: 100%; }
+.hx-bleed .hx-media img { height: 106svh; max-height: none; margin-top: 6svh; }
+@media (max-width: 900px) { .hx-bleed .hx-media img { height: 70svh; margin-top: 2svh; } }
+
+/* 전면 사진 패널 — 이전 패널이 찢긴 경계로 열리며 사진이 화면을 꽉 채운다 */
+.hx-tear { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; display: block; }
+.hx-tear[hidden] { display: none; }
+.hx-fullphoto { background: #000; }
+.hx-fullimg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; max-width: none; max-height: none; }
+.hx-dim { position: absolute; inset: 0; background: rgba(11, 10, 9, .45); }
+.hx-panel.hx-fullphoto .hx-text { position: relative; justify-self: end; margin-left: 0; margin-right: calc(7vw - var(--gutter)); width: 26vw; }
+@media (max-width: 900px) { .hx-panel.hx-fullphoto .hx-text { justify-self: center; margin-right: 0; width: min(86vw, 40ch); } }
+
+/* 대각선 입장 — 이미지가 화면 왼쪽 밖으로 넥을 흘리고, 왼쪽 아래 대각선에서 오른쪽 위로 나온다.
+   원본의 넥이 이미지 왼쪽 모서리에서 잘려 있어서, 그 모서리가 화면 밖에 있도록 왼쪽으로 붙인다. */
+.hx-diag { --di: min(58vw, 112svh); }
+.hx-diag .hx-media { position: static; }
+.hx-diag .hx-media img {
+  position: absolute; left: -2vw; top: calc(50svh - .55 * var(--di));
+  width: var(--di); height: auto; max-width: none; max-height: none;
+  transform: translate3d(calc((1 - var(--e, 1)) * -36vw), calc((1 - var(--e, 1)) * 28svh), 0);
+  will-change: transform;
+}
+@media (max-width: 900px) { .hx-diag { --di: 96vw; } .hx-diag .hx-media img { top: 8svh; } }
+
+/* 전면 영상 패널 */
+.hx-panel.hx-vfull { display: block; padding: 0; background: #000; }
+.hx-vwrap { position: absolute; inset: 0; overflow: hidden; background: #000; }
+/* 화면보다 22% 크게 깔고 가운데를 보여 준다 — 제목줄과 로고가 잘려 나간다 */
+.hx-vwrap iframe {
+  position: absolute; left: 50%; top: 50%; border: 0; pointer-events: none;
+  width: max(122vw, 217svh); height: max(68.6vw, 122svh); transform: translate(-50%, -50%);
+}
+.hx-vclick { position: absolute; inset: 0; z-index: 2; cursor: pointer; pointer-events: auto; }
+.hx-vpause {
+  position: absolute; left: 50%; top: 50%; z-index: 3; width: 72px; height: 72px; margin: -36px 0 0 -36px;
+  border-radius: 50%; background: rgba(11, 10, 9, .55); pointer-events: none;
+  opacity: 0; transform: scale(.85); transition: opacity .25s var(--ease), transform .25s var(--ease);
+}
+.hx-vpause::before, .hx-vpause::after { content: ''; position: absolute; top: 24px; width: 6px; height: 24px; background: #f2efe8; border-radius: 1px; }
+.hx-vpause::before { left: 26px; }
+.hx-vpause::after { right: 26px; }
+.hx-vfull.is-paused .hx-vpause { opacity: 1; transform: none; }
+
+/* 앞면·뒷면을 나란히 — 둘 다 왼쪽 열에 */
+figure.hx-pair { gap: clamp(16px, 2vw, 40px); justify-content: center; align-items: center; }
+figure.hx-pair img {
+  flex: 0 0 auto; width: auto; max-width: none;
+  height: min(82svh, 40vw);
+  filter: drop-shadow(0 2.4svh 3svh rgba(21, 19, 15, .28));
+}
+@media (max-width: 900px) { figure.hx-pair img { height: min(40svh, 44vw); } }
+
+/* 반쪽 기타 — 중심축(--cx)이 화면 오른쪽 끝 근처. 이미지 비율 0.75 기준으로 왼쪽을 잡는다 */
+.stage-half {
+  left: calc(var(--cx, 94vw) - var(--sh, 104svh) * .375); top: var(--st, 23svh); bottom: auto;
+  transform: translate3d(calc(var(--x, 0) * 60%), calc((1 - var(--s1, 0)) * -135svh), 0);
+  filter: drop-shadow(0 2.4svh 3svh rgba(21, 19, 15, .3));
+}
+@media (max-width: 900px) { .stage-half { --sh: 70svh; --st: 20svh; } }
+
+/* ===== 반쪽 기타 들머리 =====
+   기타 중심축이 화면 오른쪽 끝 근처에 걸려 왼쪽 반만 크게 보이고, 스크롤(--p)에 따라 위에서 내려온다. */
+.chapter .ch-head.has-entry--half { --h: 100svh; min-height: 100svh; padding: 0 var(--gutter) 40svh; }   /* 머리글 높이 = 화면 높이 — 스냅하면 윗변이 화면 윗변에 닿는다 */
+.ch-entry.ch-entry--half { overflow: visible; z-index: 2; }
+.ch-entry.ch-entry--half img {
+  left: calc(var(--ecx, 94vw) - var(--eh, 104svh) * .375); top: var(--et, 22svh);
+  width: auto; height: var(--eh, 104svh); transform-origin: 50% 0;
+  transform: translate3d(0, calc((1 - var(--p, 0)) * -135svh), 0);
+  filter: drop-shadow(0 2.4svh 3svh rgba(21, 19, 15, .3));
+}
+/* 글은 이미지 뒤에서 솟는 대신 가볍게 떠오른다 */
+.ch-head.has-entry--half .ch-title { clip-path: none; }
+.ch-head.has-entry--half h2 { opacity: var(--k1); transform: translate3d(0, calc((1 - var(--k1)) * 44px), 0); }
+.ch-head.has-entry--half .ch-nick { transform: translate3d(0, calc((1 - var(--k2)) * 24px), 0); }
+.ch-head.has-entry--half .ch-meta { transform: translate3d(0, calc((1 - var(--k3)) * 18px), 0); }
+.ch-head.has-entry--half .ch-bgyear--in { opacity: var(--k4); transform: translate3d(0, calc((1 - var(--k4)) * 14%), 0); }
+@media (max-width: 900px) { .ch-entry.ch-entry--half img { --eh: 70svh; --et: 18svh; } }
+
+/* 보정 — 연도는 원래의 옅은 농도(7%)까지만, 내려오는 기타는 머리글 윗선에서 잘라 앞 챕터 위로 넘치지 않게 */
+.ch-head.has-entry--half .ch-bgyear--in { opacity: calc(var(--k4) * .07); }
+.ch-entry.ch-entry--half { clip-path: inset(0 -10vw -100svh -10vw); }
+
+/* 반쪽 들머리의 제목은 한 줄 */
+.ch-head.has-entry--half .ch-brand { display: inline; }
+/* 연도·분류는 남기고 브랜드(둘째 칸)만 뺀다 */
+.ch-head.has-entry--half .ch-meta span:nth-child(2) { display: none; }
+
+/* 반쪽 들머리 — 제목의 밑단(글자 기준선)을 연도 숫자의 밑단과 맞춘다. 연도·분류 줄은 그 아래로 내린다. */
+.ch-head.has-entry--half { --h2s: clamp(34px, 4.6vw, 72px); }
+.ch-head.has-entry--half h2 { font-size: var(--h2s); }
+.ch-head.has-entry--half .ch-title { padding-bottom: 0; }
+/* 기준선은 h2 줄 상자 아래에서 .11em, 연도 숫자는 상자 아래에서 .035em 위에 앉는다 — 그 차이만큼 연도를 내린다 */
+.ch-head.has-entry--half .ch-bgyear--in { bottom: calc(var(--h2s) * .11 - var(--yfs) * .035); }
+.ch-head.has-entry--half .ch-meta { position: absolute; left: 0; top: 100%; margin-top: 18px; white-space: nowrap; }
+
+/* 전면 사진 위의 글을 오른쪽에 두는 챕터(stage.full.side = "r") */
+.hx-panel.hx-full.hx-full--r .hx-text { justify-self: end; margin-left: 0; margin-right: calc(11vw - var(--gutter)); }
+@media (max-width: 900px) { .hx-panel.hx-full.hx-full--r .hx-text { justify-self: center; margin-right: 0; } }
+
+/* 반쪽 들머리 — 제목과 부가 줄을 바디 왼쪽 옆(화면 오른쪽 구간)으로. 연도는 왼쪽에 그대로 둔다.
+   제목 상자를 풀어 헤더 기준으로 배치하고, 연도·제목의 밑단 정렬은 같은 기준(헤더 아래에서 40svh)을 쓴다. */
+.ch-head.has-entry--half .ch-title { position: static; }
+.ch-head.has-entry--half h2 { position: absolute; right: 43%; bottom: 40svh; margin: 0; text-align: right; white-space: nowrap; z-index: 1; }
+.ch-head.has-entry--half .ch-meta { left: auto; right: 43%; top: auto; bottom: calc(40svh - 38px); margin-top: 0; justify-content: flex-end; z-index: 1; }
+.ch-head.has-entry--half .ch-bgyear--in { left: calc(var(--gutter) - .03em); bottom: calc(40svh + var(--h2s) * .11 - var(--yfs) * .035); }
+
+/* 세로 경계 전환 — 들어오는 종이가 왼쪽으로도 번져 있어야 한다.
+   찢긴 경계가 패널 상자의 왼쪽 선을 넘어 들어가는 곳에서 종이가 없어 직선 모서리가 비치는 걸 막는다. */
+.hx-panel.is-seamx { box-shadow: -240px 0 0 0 var(--cream); }
+.era--dark .hx-panel.is-seamx { box-shadow: -240px 0 0 0 var(--night); }
+
+/* 반쪽 들머리 — 제목·부가 줄·연도는 바디 이미지 뒤에서 왼쪽으로 빠져나온다.
+   처음엔 바디 뒤(오른쪽)에 숨어 있다가 이미지가 내려온 뒤 차례로 밀려 나온다. 바디에 더 붙여 둔다. */
+.ch-head.has-entry--half h2 {
+  right: 40%;
+  opacity: clamp(0, calc(var(--k1) * 50), 1);
+  transform: translate3d(calc((1 - var(--k1)) * 46vw), 0, 0);
+}
+.ch-head.has-entry--half .ch-meta {
+  right: 40%;
+  opacity: calc(clamp(0, var(--k3) * 50, 1) * .6);
+  transform: translate3d(calc((1 - var(--k3)) * 46vw), 0, 0);
+}
+.ch-head.has-entry--half .ch-bgyear--in {
+  opacity: calc(clamp(0, var(--k4) * 40, 1) * .07);
+  transform: translate3d(calc((1 - var(--k4)) * 88vw), 0, 0);
+}
+
+/* ===== 콜라주 패널 =====
+   크기와 높이가 제각각인 이미지를 흩어 놓고, 이미지마다 작은 대문자 캡션을 단다. 글은 한쪽에 따로 선다. */
+.hx-panel.hx-collage { display: block; padding: 0; }
+.hx-collage .hx-item {
+  position: absolute; left: var(--x); top: var(--y); margin: 0;
+  /* 도면이 떨어질 때(--g1)도 같은 구성으로 — 이미지마다 방향을 달리해 기울며 빠진다 */
+  transform: translate(calc(var(--g1, 0) * (var(--n) * 6vw - 3vw)), calc(var(--g1, 0) * 130svh))
+             rotate(calc(var(--r) * 1deg + var(--g1, 0) * (14deg - var(--n) * 24deg)));
+}
+.hx-collage .hx-item img {
+  display: block; height: var(--h); width: auto; max-width: none; background: #fff;
+  box-shadow: 0 2svh 4svh rgba(21, 19, 15, .3), 0 0 0 1px rgba(21, 19, 15, .08);
+}
+.hx-collage .hx-item figcaption {
+  margin: 0 0 8px; font-family: var(--f-title); font-size: 11px; font-weight: 600;
+  letter-spacing: .14em; text-transform: uppercase; opacity: .55; white-space: nowrap;
+}
+.hx-collage .hx-text { position: absolute; left: var(--tx); top: var(--ty); width: var(--tw); max-width: none; }
+@media (max-width: 900px) {
+  .hx-collage .hx-item img { height: calc(var(--h) * .55); }
+  .hx-collage .hx-text { left: var(--gutter); top: 52svh; width: calc(100% - var(--gutter) * 2); }
+}
+
+/* =========================================================
+   펼침 패널 (spread) — ES-150
+   그림 상자(.hx-box)는 정해진 비율 안에 이미지를 % 좌표로 담는다.
+   상자가 칼럼 폭과 허용 높이 중 작은 쪽에 맞춰 통째로 줄어들기 때문에, 어떤 화면비에서도 이미지가 잘리지 않는다.
+   ========================================================= */
+.hx-panel.hx-spread {
+  --fh: min(76svh, calc(100svh - 196px));
+  grid-template-columns: minmax(0, var(--fw, 1.3fr)) minmax(0, var(--tw, 1fr));
+  column-gap: clamp(32px, 5vw, 110px);
+  padding: 0 calc(var(--gutter) + 1.5vw);
+}
+.hx-panel.hx-spread.side-r { grid-template-columns: minmax(0, var(--tw, 1fr)) minmax(0, var(--fw, 1.3fr)); }
+.hx-spread.side-r > .hx-fig { order: 2; }
+.hx-fig { position: relative; margin: 0; min-width: 0; display: flex; justify-content: center; align-items: center; }
+.hx-box { position: relative; container-type: inline-size; aspect-ratio: var(--ar); width: min(100%, calc(var(--fh) * var(--ar))); }
+.hx-it { position: absolute; left: var(--x); top: var(--y); width: var(--w); margin: 0; transform: rotate(calc(var(--rot, 0) * 1deg)); }
+.hx-it img { display: block; width: 100%; height: auto; aspect-ratio: var(--iar); max-width: none; max-height: none; }
+.hx-it.k-print img, .hx-it.k-scan img { background: #fff; box-shadow: 0 1.4svh 3.2svh rgba(21, 19, 15, .26), 0 0 0 1px rgba(21, 19, 15, .07); }
+.hx-it.k-cutout img, .hx-it.k-fade img { filter: drop-shadow(0 1.8svh 2.2svh rgba(21, 19, 15, .26)); }
+/* 목이 잘린 헤드 누끼 — 아래로 갈수록 바탕에 녹아서 끝이 보이지 않는다 */
+.hx-it.k-fade img { -webkit-mask-image: linear-gradient(#000 56%, transparent 96%); mask-image: linear-gradient(#000 56%, transparent 96%); }
+/* 어두운 사진 — 가장자리를 바탕에 녹여 사각 테두리가 드러나지 않게 */
+.hx-it.k-melt img {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent), linear-gradient(transparent, #000 5%, #000 95%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent), linear-gradient(transparent, #000 5%, #000 95%, transparent);
+  mask-composite: intersect;
+}
+
+/* 캡션 — 작은 대문자 두 줄 (이름 / 출처) */
+.hx-cap { margin: 0; font-family: var(--f-title); font-size: 11px; line-height: 1.4; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+.hx-cap b { display: block; font-weight: 700; color: var(--ink); }
+.hx-cap span { display: block; font-weight: 500; letter-spacing: .03em; text-transform: none; }
+.hx-it > .hx-cap { position: absolute; left: 0; right: 0; bottom: 100%; padding-bottom: 10px; }
+.hx-it.cap-c > .hx-cap { text-align: center; }
+.hx-dark .hx-cap { color: var(--dim-on-night); }
+.hx-dark .hx-cap b { color: var(--paper-on-night); }
+
+/* 주석 — 점에서 바깥으로 선이 뻗고 이름이 뜬다 (--ia: 패널이 자리 잡은 뒤 0→1) */
+.hx-note {
+  --pi: clamp(0, calc((var(--ia, 0) - var(--n, 0) * .1) / .5), 1);
+  position: absolute; top: var(--by); display: flex; align-items: center; transform: translateY(-50%);
+  pointer-events: none; color: var(--ink);
+}
+.hx-note--l { left: 0; width: var(--bx); }
+.hx-note--r { left: var(--bx); right: 0; flex-direction: row-reverse; }
+.hx-note span {
+  flex: 0 0 auto; width: 17.5cqw; font-family: var(--f-title); font-weight: 600; font-size: clamp(9.5px, 1.18cqw, 13px);
+  line-height: 1.3; letter-spacing: .08em; text-transform: uppercase; opacity: clamp(0, calc(var(--pi) * 3 - 2), 1);
+}
+.hx-note--l span { text-align: right; padding-right: 10px; }
+.hx-note--r span { text-align: left; padding-left: 10px; }
+.hx-note i { flex: 1 1 auto; height: 1px; background: currentColor; opacity: .7; transform: scaleX(var(--pi)); }
+.hx-note--l i { transform-origin: 100% 50%; }
+.hx-note--r i { transform-origin: 0 50%; }
+.hx-note b {
+  flex: 0 0 auto; width: 7px; height: 7px; margin: 0 -3.5px; border-radius: 50%; background: currentColor;
+  box-shadow: 0 0 0 2px var(--cream); transform: scale(clamp(0, calc(var(--pi) * 5), 1));
+}
+/* 치수선 */
+.hx-dimline {
+  --pi: clamp(0, calc((var(--ia, 0) - .3) / .5), 1);
+  position: absolute; top: var(--y); left: var(--x0); width: calc(var(--x1) - var(--x0)); height: 9px; margin-top: -4.5px; color: var(--ink-2);
+}
+.hx-dimline i { position: absolute; left: 0; right: 0; top: 4px; height: 1px; background: currentColor; transform: scaleX(var(--pi)); }
+.hx-dimline::before, .hx-dimline::after { content: ''; position: absolute; top: 0; width: 1px; height: 9px; background: currentColor; opacity: var(--pi); }
+.hx-dimline::before { left: 0; }
+.hx-dimline::after { right: 0; }
+.hx-dimline span {
+  position: absolute; left: 50%; top: 15px; transform: translateX(-50%); white-space: nowrap;
+  font-family: var(--f-title); font-weight: 600; font-size: clamp(10px, 1.2cqw, 13px); letter-spacing: .08em;
+  opacity: clamp(0, calc(var(--pi) * 3 - 2), 1);
+}
+
+/* 글 칼럼의 장식 — 머리글자, 날짜 도장, 연표, 인용, 작은 사진 */
+.hx-mono { display: flex; flex-direction: column; margin: 0 0 2.6svh; }
+.hx-mono span {
+  --pi: clamp(0, calc((var(--ia, 0) - var(--n, 0) * .14) / .5), 1);
+  display: flex; align-items: baseline; opacity: var(--pi); transform: translate3d(0, calc((1 - var(--pi)) * 3svh), 0);
+}
+.hx-mono b { font-family: var(--f-title); font-weight: 800; font-size: clamp(64px, min(10vw, 17svh), 200px); line-height: .84; letter-spacing: -.05em; }
+.hx-mono em { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-size: clamp(30px, min(4.4vw, 7.6svh), 92px); line-height: 1; margin-left: .06em; color: var(--ink-2); }
+.hx-kicker {
+  display: inline-block; margin: 0 0 2.4svh; padding-top: 1.2svh; border-top: 1px solid currentColor;
+  font-family: var(--f-title); font-weight: 600; font-size: 12px; line-height: 1.4; letter-spacing: .12em; text-transform: uppercase;
+}
+.hx-steps {
+  list-style: none; margin: 0 0 3svh; padding: 0; display: grid; grid-template-columns: repeat(var(--cnt, 3), minmax(0, 1fr));
+  column-gap: 16px; border-top: 1px solid currentColor;
+}
+.hx-steps li { --pi: clamp(0, calc((var(--ia, 1) - var(--n, 0) * .12) / .5), 1); position: relative; padding-top: 1.4svh; opacity: var(--pi); }
+.hx-steps li::before { content: ''; position: absolute; left: 0; top: -4px; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.hx-steps b { display: block; font-family: var(--f-title); font-weight: 700; font-size: clamp(12px, 1vw, 15px); line-height: 1.25; letter-spacing: .06em; text-transform: uppercase; }
+.hx-steps span { display: block; margin-top: 4px; font-family: var(--f-title); font-weight: 500; font-size: clamp(11px, .85vw, 13px); line-height: 1.4; letter-spacing: .02em; opacity: .72; }
+.hx-steps--big b { font-size: clamp(26px, min(2.8vw, 5svh), 48px); font-weight: 800; line-height: 1; letter-spacing: -.03em; }
+.hx-pull { margin: 0 0 3.2svh; font-family: var(--f-serif); font-size: clamp(24px, min(2.6vw, 4.6svh), 46px); line-height: 1.22; letter-spacing: -.01em; }
+.hx-pull::before { content: '“'; }
+.hx-pull::after { content: '”'; }
+:root[lang="ja"] .hx-pull::before { content: '「'; }
+:root[lang="ja"] .hx-pull::after { content: '」'; }
+:root[lang="ko"] .hx-pull { word-break: keep-all; }
+.hx-inset { margin: 0 0 3svh; width: min(74%, 40svh); }
+.hx-inset img { display: block; width: 100%; height: auto; box-shadow: 0 1.2svh 2.8svh rgba(21, 19, 15, .24), 0 0 0 1px rgba(21, 19, 15, .07); }
+.hx-inset .hx-cap { margin-bottom: 10px; }
+
+/* 글 칼럼 — 칸보다 길면 넘친 만큼 패널이 머무는 동안 위로 흐른다(JS) */
+.hx-panel.hx-spread > .hx-text { align-self: center; justify-self: stretch; width: 100%; max-width: none; max-height: calc(100svh - 150px); overflow: hidden; padding: 4px 6px 4px 0; }
+.hx-tin { will-change: transform; }
+.hx-spread .hx-text .block { max-width: 34em; }
+:root[lang] .hx-spread .block p { font-size: clamp(15px, min(1.3vw, 2.3svh), 21px); line-height: 1.45; }
+:root[lang="ko"] .hx-spread .block p,
+:root[lang="ja"] .hx-spread .block p { font-size: clamp(14.5px, min(1.18vw, 2.1svh), 18.5px); line-height: 1.78; }
+:root[lang] .hx-panel.hx-bigtext .block p { font-size: clamp(26px, min(2.9vw, 5.4svh), 56px); line-height: 1.22; letter-spacing: -.012em; }
+.hx-text.is-ov {
+  -webkit-mask-image: linear-gradient(transparent, #000 2.5%, #000 86%, transparent);
+  mask-image: linear-gradient(transparent, #000 2.5%, #000 86%, transparent);
+}
+
+/* 어두운 패널 */
+.hx-panel.hx-dark { background: #0f0d0b; color: var(--paper-on-night); }
+.hx-dark .block { color: var(--paper-on-night); }
+
+/* ===== 무대 — 앞·뒤 풀샷을 통째로 (stage.whole) =====
+   앞면은 왼쪽에서 위로부터 내려오고, 뒷면은 180° 돌려 오른쪽에서 아래로부터 솟는다. 인용은 그 사이에. */
+.stage--whole { --hs: min(84svh, 44vw); --qw: 520px; }
+.stage--whole .stage-img { height: var(--hs); top: calc(50svh - var(--hs) / 2); bottom: auto; filter: drop-shadow(0 2svh 2.6svh rgba(21, 19, 15, .26)); }
+.stage--whole .stage-tl {
+  left: max(var(--gutter), calc((100vw - var(--qw)) / 4 - var(--hs) * .2088)); right: auto;
+  transform: translate3d(calc(var(--x, 0) * -1 * (30vw + var(--hs) * .45)), calc((1 - var(--s1, 0)) * -1 * (50svh + var(--hs) / 2 + 6svh)), 0);
+}
+.stage--whole .stage-br {
+  right: max(var(--gutter), calc((100vw - var(--qw)) / 4 - var(--hs) * .2159)); left: auto;
+  transform: translate3d(calc(var(--x, 0) * (30vw + var(--hs) * .45)), calc((1 - var(--s2, 0)) * (50svh + var(--hs) / 2 + 6svh)), 0) rotate(180deg);
+}
+
+/* ===== 전면 사진 — 꽉 채우지 않고 온전한 한 장으로 (stage.full.fit) ===== */
+.stage-full--fit { background: #12100d; --pw: min(calc(50vw - var(--gutter)), calc(72svh * var(--ar))); }
+.stage-full--fit .stage-full-img {
+  inset: auto; left: max(var(--gutter), calc(26vw - var(--pw) / 2)); top: 50%;
+  width: var(--pw); height: auto; aspect-ratio: var(--ar); object-fit: contain;
+  transform: translate3d(0, calc(-50% + var(--q, 0) * -2.5svh), 0);
+  box-shadow: 0 2.6svh 6svh rgba(0, 0, 0, .55);
+}
+.stage-full--fit .stage-full-dim { display: none; }
+.stage-full-cap {
+  position: absolute; left: max(var(--gutter), calc(26vw - var(--pw) / 2)); bottom: calc(50% + var(--pw) / var(--ar) / 2 + 12px);
+  color: var(--dim-on-night); transform: translate3d(0, calc(var(--q, 0) * -2.5svh), 0);
+}
+.stage-full-cap b { color: var(--paper-on-night); }
+.hx-full--fit .hx-text { max-height: calc(100svh - 150px); overflow: hidden; }
+.hx-full .hx-steps { opacity: var(--r, 0); color: #f2efe8; margin-bottom: 3.4svh; }
+
+/* 넘친 그림이 모바일에서 레이아웃 뷰포트를 넓히지 않게 — 챕터 가장자리에서 가로만 자른다(sticky 유지) */
+.chapter { overflow-x: clip; }
+
+@media (max-width: 900px) {
+  /* 펼침 패널 — 그림 위, 글 아래. 그림 상자는 주석 여백을 걷어 낸 배치(--m*)를 쓴다 */
+  .hx-panel.hx-spread, .hx-panel.hx-spread.side-r {
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
+    align-content: stretch; align-items: start; row-gap: 3svh;
+    padding: 98px var(--gutter) 4svh;
+  }
+  .hx-panel.hx-spread > .hx-fig { order: 0; }
+  .hx-spread .hx-box { aspect-ratio: var(--mar, var(--ar)); width: min(100%, calc(var(--mfh, 36svh) * var(--mar, var(--ar)))); }
+  .hx-it { left: var(--mx, var(--x)); top: var(--my, var(--y)); width: var(--mw, var(--w)); }
+  .hx-note { display: none; }
+  .hx-dimline { left: var(--mx0, var(--x0)); width: calc(var(--mx1, var(--x1)) - var(--mx0, var(--x0))); }
+  .hx-panel.hx-spread > .hx-text { align-self: stretch; height: 100%; max-height: none; padding: 0; }
+  .hx-inset { display: none; }
+  .hx-mono { flex-direction: row; gap: 5vw; margin-bottom: 2svh; }
+  .hx-mono b { font-size: clamp(46px, 15vw, 84px); }
+  .hx-mono em { font-size: clamp(22px, 6.6vw, 36px); }
+  .hx-steps--big b { font-size: clamp(22px, 6.4vw, 30px); }
+  .hx-pull { font-size: clamp(19px, 5.4vw, 26px); margin-bottom: 2.2svh; }
+  :root[lang] .hx-spread .block p { font-size: 15px; line-height: 1.55; }
+  :root[lang="ko"] .hx-spread .block p,
+  :root[lang="ja"] .hx-spread .block p { font-size: 14.5px; line-height: 1.72; }
+  :root[lang] .hx-panel.hx-bigtext .block p { font-size: clamp(21px, 6vw, 28px); }
+
+  /* 무대 — 좁은 화면에서는 두 대를 눕혀 위·아래에 둔다 */
+  .stage--whole { --L: min(86vw, 46svh); }
+  .stage--whole .stage-img { height: var(--L); }
+  .stage--whole .stage-tl {
+    left: calc(50% - var(--L) * .2088); top: calc(64px + var(--L) * .2088 - var(--L) / 2);
+    transform: translate3d(calc(var(--x, 0) * -1 * (55vw + var(--L) / 2)), calc((1 - var(--s1, 0)) * -1 * (64px + var(--L) * .42 + 6svh)), 0) rotate(-90deg);
+  }
+  .stage--whole .stage-br {
+    right: auto; left: calc(50% - var(--L) * .2159); top: calc(100svh - 40px - var(--L) * .2159 - var(--L) / 2);
+    transform: translate3d(calc(var(--x, 0) * (55vw + var(--L) / 2)), calc((1 - var(--s2, 0)) * (40px + var(--L) * .44 + 6svh)), 0) rotate(90deg);
+  }
+
+  /* 전면 사진 — 위에 한 장, 글은 그 아래 */
+  .stage-full--fit { --pw: min(calc(100vw - 2 * var(--gutter)), calc(30svh * var(--ar))); }
+  .stage-full--fit .stage-full-img { left: 50%; top: calc(64px + 4svh); transform: translate3d(-50%, 0, 0); }
+  .stage-full-cap { display: none; }
+  .hx-panel.hx-full.hx-full--fit {
+    --pwm: min(calc(100vw - 2 * var(--gutter)), calc(30svh * var(--ar)));
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); align-content: stretch;
+    padding: calc(64px + 8svh + var(--pwm) / var(--ar)) var(--gutter) 4svh;
+  }
+  .hx-panel.hx-full.hx-full--fit .hx-text { width: 100%; max-width: none; margin: 0; justify-self: stretch; align-self: stretch; height: 100%; max-height: none; }
+  :root[lang] .hx-full--fit .block p { font-size: 16px; line-height: 1.6; }
+
+  /* 반쪽 들머리 — 바디는 오른쪽 위, 제목·연도는 그 아래 왼쪽에서 떠오른다 */
+  .chapter .ch-head.has-entry--half { padding-bottom: 16svh; }
+  .ch-entry.ch-entry--half img { --eh: min(60svh, 116vw); --et: 10svh; }
+  .ch-head.has-entry--half { --h2s: clamp(30px, 9.6vw, 46px); --yfs: clamp(110px, 33vw, 200px); }
+  .ch-head.has-entry--half h2 { right: auto; left: var(--gutter); bottom: 16svh; text-align: left; transform: translate3d(0, calc((1 - var(--k1)) * 28px), 0); }
+  .ch-head.has-entry--half .ch-meta { right: auto; left: var(--gutter); bottom: calc(16svh - 34px); justify-content: flex-start; transform: translate3d(0, calc((1 - var(--k3)) * 18px), 0); }
+  .ch-head.has-entry--half .ch-bgyear--in { bottom: calc(16svh + var(--h2s) * .11 - var(--yfs) * .035); transform: translate3d(0, calc((1 - var(--k4)) * 40%), 0); }
+}
+
+/* 보정 — 주석 이름 칸은 상자 여백(--lw, 상자 폭 대비 %)에 맞추고 조금 크게 */
+.hx-note span { width: calc(var(--lw, 17.5) * 1cqw); font-size: clamp(10px, 1.45cqw, 13px); }
+/* 오른쪽 연도 레일(1100px 이상에서 보임)과 겹치지 않게 오른쪽을 비운다 */
+@media (min-width: 1101px) {
+  .hx-panel.hx-spread { padding-right: calc(var(--gutter) + 1.5vw + 96px); }
+  .stage--whole { --rail: 96px; }
+}
+.stage--whole { --hs: min(84svh, 44vw, calc(((100vw - var(--qw)) / 2 - var(--gutter) - var(--rail, 0px) - 40px) / .4317)); }
+.stage--whole .stage-tl { left: max(calc(var(--gutter) + var(--rail, 0px)), calc((100vw - var(--qw)) / 4 - var(--hs) * .2088)); }
+.stage--whole .stage-br { right: max(calc(var(--gutter) + var(--rail, 0px)), calc((100vw - var(--qw)) / 4 - var(--hs) * .2159)); }
+@media (max-width: 900px) {
+  .stage--whole .stage-tl { left: calc(50% - var(--L) * .2088); }
+  .stage--whole .stage-br { right: auto; }
+}
+@media (max-width: 900px) {
+  /* 여러 장이 나란한 상자 — 이미지가 좁아서 캡션은 첫 줄만, 작게 */
+  .hx-box.is-multi .hx-it > .hx-cap { font-size: 9.5px; letter-spacing: .06em; padding-bottom: 6px; }
+  .hx-box.is-multi .hx-it > .hx-cap span { display: none; }
+}
+
+
+/* 반쪽 들머리 연도 — 앞 챕터 연도에서 슬롯처럼 굴러온다(--rp). 굴러가는 동안은 진하고, 기타가 내려오기 전에 옅어진다(--yo) */
+.ch-head.has-entry--half .ch-bgyear--in { opacity: var(--yo, 0); transform: none; }
+.ch-bgyear--in .yr-d, .ch-bgyear--in .yr-reel { display: inline-block; vertical-align: top; height: var(--cell); }
+.ch-bgyear--in .yr-reel { clip-path: inset(0 -.3em); }
+.ch-bgyear--in .yr-strip { display: flex; flex-direction: column; transform: translate3d(0, calc(var(--rp, 0) * var(--n) * var(--cell) * -1), 0); will-change: transform; }
+.ch-bgyear--in .yr-strip i { font-style: normal; display: block; height: var(--cell); line-height: var(--cell); }
+
+/* 앞·뒤 풀샷 — 그림자가 끊겨 보여서 뺀다 */
+figure.hx-pair img { filter: none; }
+
+/* 반쪽 들머리 — 어두운 바탕(--fd 0→1 에 걸쳐 걷힌다)과 그 윗변의 찢긴 크림 종이 */
+.ch-head.has-entry--half { isolation: isolate; }
+.ch-dark { position: absolute; inset: 0; z-index: -3; background: var(--night); opacity: calc(1 - var(--fd, 0)); pointer-events: none; }
+.ch-tear { position: absolute; left: 0; top: 0; width: 100%; height: 40svh; z-index: -2; pointer-events: none; display: block; --paper: var(--cream); }
+.ch-tear[hidden] { display: none; }
+.ch-head.has-entry--half .ch-bgyear--in { color: color-mix(in srgb, var(--ink) calc(var(--fd, 0) * 100%), #f2efe8); }
+
+/* 연도는 왼쪽 위를 기준으로 키웠다 줄인다(JS). 찢긴 종이는 연도 위에 덮인다 */
+.ch-head.has-entry--half .ch-bgyear--in { transform-origin: 0 0; }
+.ch-tear { z-index: 0; }
+
+/* 어두운 막 — 화면에 고정. 윗변은 찢긴 종이(JS가 clip-path와 위치를 준다). 머리글은 앞 챕터 무대 위로 올라와야 한다 */
+.ch-head.has-entry--half { z-index: 4; }
+.ch-dark { position: fixed; inset: auto; left: 0; top: 0; width: 100%; height: 190vh; z-index: -3; will-change: transform; }
+.ch-tear { position: fixed; left: 0; top: 0; width: 100%; height: 100vh; z-index: 0; opacity: calc(1 - var(--fd, 0)); }
+.ch-dark[hidden], .ch-tear[hidden] { display: none; }
+
+/* ES-150 무대 — 앞·뒤 풀샷 1.5배 (데스크탑) */
+@media (min-width: 901px) {
+  .stage--whole { --hs: calc(min(84svh, 44vw, calc(((100vw - var(--qw)) / 2 - var(--gutter) - var(--rail, 0px) - 40px) / .4317)) * 1.5); }
+}
+@media (min-width: 901px) {
+  /* 1.5배가 된 두 대는 양 끝에 붙이고, 인용은 그 사이 남는 폭에 맞춘다 */
+  .ch-head.has-entry--half ~ .hero-wrap { --qw: 520px; --hs: calc(min(84svh, 44vw, calc(((100vw - var(--qw)) / 2 - var(--gutter) - var(--rail, 0px) - 40px) / .4317)) * 1.5); }
+  .stage--whole .stage-tl { left: calc(var(--gutter) + var(--rail, 0px)); }
+  .stage--whole .stage-br { right: calc(var(--gutter) + var(--rail, 0px)); }
+  .ch-head.has-entry--half ~ .hero-wrap .hero-step .block { max-width: min(28em, calc(100vw - 2 * (var(--gutter) + var(--rail, 0px)) - var(--hs) * .87 - 96px)); }
+}
+@media (min-width: 1101px) { .ch-head.has-entry--half ~ .hero-wrap { --rail: 96px; } }
+@media (min-width: 901px) {
+  /* 두 대를 화면 가장자리 쪽으로 더 벌린다 — 왼쪽은 가장자리 가까이, 오른쪽은 연도 레일만 피한다. 인용과의 틈도 넓힌다 */
+  .ch-head.has-entry--half ~ .hero-wrap { --se: max(1.5vw, 16px); --sr: calc(var(--rail, 0px) + 54px); }
+  .stage--whole .stage-tl { left: var(--se); }
+  .stage--whole .stage-br { right: max(var(--se), var(--sr)); }
+  .ch-head.has-entry--half ~ .hero-wrap .hero-step .block { max-width: min(28em, calc(100vw - 2 * max(var(--se), var(--sr)) - var(--hs) * .87 - 220px)); }
+}
+@media (min-width: 901px) {
+  /* 인용은 두 기타 사이 한가운데에 — 오른쪽 여백(레일)이 더 넓은 만큼 왼쪽으로 민다 */
+  .ch-head.has-entry--half ~ .hero-wrap .hero-step .block { position: relative; left: calc((var(--se) - max(var(--se), var(--sr))) / 2); }
+}
+
+@media (min-width: 901px) {
+  /* 인용은 화면 한가운데, 두 기타는 양 끝에서 같은 거리 */
+  .ch-head.has-entry--half ~ .hero-wrap .hero-step .block { left: 0; }
+  .stage--whole .stage-tl { left: max(var(--se), var(--sr)); }
+}
+
+/* Electro A-22 들머리 — 크기는 그대로, 헤드만 오른쪽으로 조금(넥 끝이 화면 왼쪽 밖에 남는 데까지) */
+@media (min-width: 901px) {
+  .chapter .ch-head.has-entry:not(.has-entry--half) { --end: min(69vw, calc(var(--iw) * 2 - 1vw)); }
+}
+
+/* ES-150 들머리 — 제목·부가 줄을 아래로 내리고 바디 쪽으로 붙인다. 연도 밑단은 제목 기준선에 계속 맞춘다 */
+@media (min-width: 901px) {
+  .ch-head.has-entry--half { --tb: 28svh; }
+  .ch-head.has-entry--half h2 { right: 28%; bottom: var(--tb); }
+  .ch-head.has-entry--half .ch-meta { right: 28%; bottom: calc(var(--tb) - 38px); }
+  .ch-head.has-entry--half .ch-bgyear--in { bottom: calc(var(--tb) + var(--h2s) * .11 - var(--yfs) * .035); }
+}
+
+/* ES-150 무대 — 일반 데스크탑 비율에서 1.5배가 화면 높이를 넘어 바디가 잘린다. 높이를 화면의 92%로 묶어 통째로 보이게 하고,
+   폭이 줄어든 만큼 두 대 사이가 넓어진다 */
+@media (min-width: 901px) {
+  .ch-head.has-entry--half ~ .hero-wrap { --hs: min(92svh, calc(min(84svh, 44vw, calc(((100vw - var(--qw)) / 2 - var(--gutter) - var(--rail, 0px) - 40px) / .4317)) * 1.5)); }
+}
+@media (min-width: 901px) {
+  .stage--whole { --hs: min(92svh, calc(min(84svh, 44vw, calc(((100vw - var(--qw)) / 2 - var(--gutter) - var(--rail, 0px) - 40px) / .4317)) * 1.5)); }
+}
+
+/* ES-150 들머리 — 연도를 제목 뒤로(바디 쪽). 오른쪽 끝을 제목과 맞춘다 */
+@media (min-width: 901px) {
+  .ch-head.has-entry--half .ch-bgyear--in { left: auto; right: calc(28% - .04em); }
+}
+
+/* 누끼가 솟는 패널 (ES-150 launch) — 바디 누끼가 왼쪽 반의 가운데에 크게. 넥 토막은 화면 위로 넘겨 보이지 않게 */
+.hx-panel.hx-riseimg { overflow: hidden; }
+.hx-rise {
+  position: absolute; height: var(--lh); width: auto; max-width: none; top: var(--lt);
+  left: calc(25vw - var(--lh) * .375);
+  transform: translate3d(0, calc((1 - var(--e, 1)) * 75svh), 0);
+  filter: drop-shadow(0 2.4svh 3svh rgba(21, 19, 15, .28));
+  will-change: transform; pointer-events: none;
+}
+.hx-riseimg .hx-text { grid-column: 2; justify-self: start; margin-left: 4vw; position: relative; }
+@media (max-width: 900px) {
+  .hx-rise { --lh: 62svh; --lt: 2svh; left: calc(50vw - 62svh * .375); }
+  .hx-riseimg .hx-text { grid-column: 1; grid-row: 2; margin-left: 0; }
+}
+
+/* 전면 사진은 가로로만 밀린다 — 스크롤에 따른 위아래 흔들림(시차)을 없앤다 (Electro A-22, ES-150 공통) */
+.stage-full-img { transform: none; }
+
+/* 왼쪽 반 사진 패널 (ES-150 launch) — 사진 판은 왼쪽으로 240px 더 뻗고 같은 어두운 색으로 이어진다 */
+.hx-panel.hx-photohalf { overflow: visible; }
+.hx-ph { position: absolute; top: 0; bottom: 0; left: -240px; width: calc(50vw + 240px); background: #0d0b09; overflow: hidden; }
+.hx-ph img { position: absolute; top: 0; right: 0; width: 50vw; height: 100%; max-width: none; object-fit: cover; object-position: 50% 45%; }
+.hx-photohalf .hx-text { grid-column: 2; justify-self: start; margin-left: 4vw; position: relative; }
+.hx-panel.hx-photohalf.is-seamx { box-shadow: none; }
+@media (max-width: 900px) {
+  .hx-ph { width: calc(100vw + 240px); bottom: 50%; }
+  .hx-ph img { width: 100vw; }
+  .hx-photohalf .hx-text { grid-column: 1; grid-row: 2; margin-left: 0; }
+}
+
+/* launch — 사진은 오른쪽 반, 글은 왼쪽 반. 경계는 패널 정확히 가운데(50%) */
+.hx-panel.hx-photohalf.side-r { padding: 0; grid-template-columns: 1fr 1fr; column-gap: 0; }
+.hx-photohalf.side-r .hx-ph { left: 50%; right: 0; width: auto; }
+.hx-photohalf.side-r .hx-ph img { width: 100%; }
+.hx-photohalf.side-r .hx-text { grid-column: 1; justify-self: center; margin: 0; padding: 0 var(--gutter); }
+.hx-panel.hx-photohalf.side-r.is-seamx { box-shadow: -240px 0 0 0 var(--cream); }
+@media (max-width: 900px) {
+  .hx-panel.hx-photohalf.side-r { grid-template-columns: 1fr; }
+  .hx-photohalf.side-r .hx-ph { left: 0; bottom: 50%; }
+}
+
+/* ===== 가로 갤러리 (ES-150 object) — 화면 가운데에 온 조각이 커지고(--f) 나머지는 작고 살짝 어둡다 ===== */
+.hx-panel.hx-gallery { display: block; padding: 0; overflow: hidden; }
+.gl-track { position: absolute; top: 0; left: 0; height: 100%; width: var(--tw); will-change: transform; }
+.gl-it { position: absolute; left: var(--x); top: var(--y); margin: 0; transform-origin: 50% 50%;
+  transform: scale(calc(.86 + var(--f, 0) * .14)); opacity: calc(.72 + var(--f, 0) * .28); will-change: transform, opacity; }
+.gl-img img { display: block; height: var(--h); width: auto; aspect-ratio: var(--ar); max-width: none; box-shadow: 0 1.6svh 3.4svh rgba(21, 19, 15, .24); }
+.gl-txt { width: var(--w); }
+.gl-txt .block { max-width: none; }
+:root[lang] .gl-big .block p { font-size: clamp(28px, 2.6vw, 52px); line-height: 1.2; letter-spacing: -.01em; }
+.gl-txt .block { opacity: 1; transform: none; }
+
+.gl-it.gl-b { top: auto; bottom: var(--b); }
+
+/* 세로 경계 전환으로 들어오는 패널 — 찢긴 윗변이 패널 윗선보다 위로 굽이쳐도 곧은 모서리가 드러나지 않게 위로 번져 둔다 */
+.hx-panel.is-seam { box-shadow: 0 -240px 0 0 var(--cream); }
+.hx-panel.is-seam .hx-ph { top: -240px; }
+
+/* 전면 영상 — 위쪽 맞춤 (ES-150). 화면을 덮을 만큼만(6% 여유) 키우고 윗변을 화면 윗변에 붙인다. 남는 부분은 아래로 잘린다 */
+.hx-vfull--top .hx-vwrap iframe { top: 0; width: max(106vw, 188.4svh); height: max(59.6vw, 106svh); transform: translate(-50%, 0); }
+
+/* christian — 검정 바탕. 사진의 글 쪽 가장자리를 바탕으로 녹여 사진과 글 칸 사이 경계가 드러나지 않게 */
+.hx-panel.hx-photohalf.hx-dark { background: #0b0a09; color: var(--paper-on-night); }
+.hx-photohalf.hx-dark .hx-ph { background: #0b0a09; }
+.hx-photohalf.hx-dark.side-r .hx-ph img { -webkit-mask-image: linear-gradient(90deg, transparent 0, rgba(0,0,0,.55) 14%, #000 42%); mask-image: linear-gradient(90deg, transparent 0, rgba(0,0,0,.55) 14%, #000 42%); }
+.hx-photohalf.hx-dark .block { color: var(--paper-on-night); }
+.hx-panel.hx-dark.is-seam { box-shadow: 0 -240px 0 0 #0b0a09; }
+
+/* ES-150 영상 — 유튜브 제목줄(위 7%)과 자막 자리(아래)를 화면 밖으로 넘긴다. 확대는 화면을 덮는 데 필요한 만큼만 */
+.hx-vfull--top .hx-vwrap iframe { --vh: max(59.6vw, 115svh); height: var(--vh); width: calc(var(--vh) * 16 / 9); top: calc(var(--vh) * -.07); }
+
+/* 소리만 나오는 유튜브 플레이어 — 화면에 보이지 않게(재생이 막히지 않도록 크기는 유지) */
+.hx-aud { position: absolute; left: 0; top: 0; width: 320px; height: 180px; opacity: 0; pointer-events: none; overflow: hidden; z-index: -1; }
+.hx-aud .hx-vwrap, .hx-aud iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.hx-aud iframe { transform: none; left: 0; top: 0; }
+
+/* 사진을 자르지 않고 화면 높이 그대로 — 오른쪽에 붙이고, 글 쪽 가장자리는 검정 바탕에 녹인다 (ES-150 마무리) */
+.hx-photohalf.hx-phfit.side-r .hx-ph { left: auto; right: 0; width: auto; height: 100%; }
+.hx-photohalf.hx-phfit .hx-ph img { position: relative; display: block; width: auto; height: 100%; max-width: none; object-fit: contain; }
+.hx-photohalf.hx-phfit.side-r .hx-text { grid-column: 1; justify-self: center; }
+.hx-panel.hx-photohalf.hx-phfit.side-r { grid-template-columns: minmax(0, 1fr) calc(100svh * .8 - 8vw); }
+/* 경계 전환 중 사진 판이 위로 늘어나도(is-seam) 사진은 화면 높이 그대로, 아랫변에 붙는다 */
+.hx-photohalf.hx-phfit.side-r .hx-ph { width: calc(100svh * .8); }
+.hx-photohalf.hx-phfit .hx-ph img { position: absolute; right: 0; bottom: 0; top: auto; height: 100svh; }
+.hx-photohalf.hx-phfit.side-r .hx-ph { height: auto; }
+
+/* 마무리 화면 — 사진은 왼쪽에 화면 높이 그대로, 글 쪽(오른쪽) 가장자리를 검정 바탕에 녹인다 */
+.hx-panel.hx-photohalf.hx-phfit:not(.side-r) { padding: 0; grid-template-columns: calc(100svh * .8 - 8vw) minmax(0, 1fr); column-gap: 0; }
+.hx-photohalf.hx-phfit:not(.side-r) .hx-ph { left: 0; right: auto; width: calc(100svh * .8); height: auto; }
+.hx-photohalf.hx-phfit:not(.side-r) .hx-ph img { left: 0; right: auto; }
+.hx-photohalf.hx-dark.hx-phfit:not(.side-r) .hx-ph img { -webkit-mask-image: linear-gradient(270deg, transparent 0, rgba(0,0,0,.55) 14%, #000 42%); mask-image: linear-gradient(270deg, transparent 0, rgba(0,0,0,.55) 14%, #000 42%); }
+.hx-photohalf.hx-phfit:not(.side-r) .hx-text { grid-column: 2; justify-self: center; margin: 0; padding: 0 var(--gutter); }
+
+/* 검정으로 이어 받는 머리글(ES-175) — 어두운 바탕은 머리글 상자에만 깔린다. 앞 챕터의 검정 화면과 한 장처럼 이어진다 */
+.ch-head.has-entry--darkin .ch-dark { position: absolute; inset: 0; width: auto; height: auto; transform: none !important; clip-path: none !important; }
+
+/* 사진을 화면 높이 그대로 쓰는 칸(phfit) — 크림 바탕일 때도 글 쪽 가장자리를 바탕에 녹인다 */
+.hx-photohalf.hx-phfit:not(.hx-dark) .hx-ph { background: var(--cream); }
+.hx-photohalf.hx-phfit:not(.hx-dark):not(.side-r) .hx-ph img { -webkit-mask-image: linear-gradient(270deg, transparent 0, rgba(0,0,0,.55) 14%, #000 42%); mask-image: linear-gradient(270deg, transparent 0, rgba(0,0,0,.55) 14%, #000 42%); }
+.hx-photohalf.hx-phfit:not(.hx-dark) .block { color: var(--ink); }
+
+/* ES-150 마지막 사진 — 아랫변도 검정에 녹여 다음 챕터의 검정 화면과 선 없이 이어지게 */
+.hx-photohalf.hx-dark.hx-phfit:not(.side-r) .hx-ph img {
+  -webkit-mask-image: linear-gradient(270deg, transparent 0, rgba(0,0,0,.55) 14%, #000 42%), linear-gradient(to top, transparent 0, #000 14%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(270deg, transparent 0, rgba(0,0,0,.55) 14%, #000 42%), linear-gradient(to top, transparent 0, #000 14%);
+  mask-composite: intersect;
+}
+
+/* 연도 릴 — 숫자 칸 사이를 띄워, 굴러간 뒤에도 앞 숫자의 아랫부분이 칸 위쪽에 비치지 않게 */
+.ch-bgyear--in .yr-strip i { height: calc(var(--cell) * 1.35); }
+.ch-bgyear--in .yr-strip { transform: translate3d(0, calc(var(--rp, 0) * var(--n) * var(--cell) * -1.35), 0); }
+
+/* 사진 반쪽 칸의 왼쪽 연장(240px)은 세로 찢김 경계로 들어올 때만 — 평소에는 옆 화면으로 삐져나오지 않게 */
+.hx-photohalf:not(.side-r):not(.is-seamx):not(.hx-phfit) .hx-ph { left: 0; width: 50vw; }
+
+/* 전면 사진 패널을 찢김 없이(가로) 들일 때는 글을 바로 보인다 */
+.hx-fullphoto:not([data-enter="tear"]) .hx-text .block.fade { opacity: 1; }
+
+/* 사진 반쪽 칸 — 사진은 늘 화면 높이 그대로 아랫변에 붙는다. 경계 전환용으로 칸이 위로 늘어났다 돌아와도 사진 크기가 튀지 않게 */
+@media (min-width: 901px) {
+  .hx-photohalf:not(.hx-phfit) .hx-ph img { top: auto; bottom: 0; height: 100svh; }
+}
+
+/* 왼쪽 반쪽 들머리 (ES-175) — 바디 중심을 화면 왼쪽 끝에 걸어 오른쪽 반(컷어웨이 쪽)만 보이게.
+   제목·부가 줄·연도는 바디 오른쪽 옆에서 시작하고, 바디 뒤에서 오른쪽으로 빠져나온다 */
+@media (min-width: 901px) {
+  .ch-head.has-entry--left h2 { right: auto; left: 28%; text-align: left; transform: translate3d(calc((1 - var(--k1)) * -46vw), 0, 0); }
+  .ch-head.has-entry--left .ch-meta { right: auto; left: 28%; justify-content: flex-start; transform: translate3d(calc((1 - var(--k3)) * -46vw), 0, 0); }
+  .ch-head.has-entry--left .ch-bgyear--in { right: auto; left: calc(28% - .04em); }
+}
+@media (min-width: 901px) {
+  /* 연도는 오른쪽 레일 앞에서 끝나게 — 왼쪽 끝은 바디 옆에 걸린다 */
+  .ch-head.has-entry--left .ch-bgyear--in { left: auto; right: calc(var(--gutter) + 96px); }
+}
+
+/* 전면 사진(fit)을 오른쪽에 — 작은 원본은 1.4배 이상 키우지 않는다 */
+.stage-full--fit.stage-full--photo-r { --pw: min(40vw, calc(72svh * var(--ar)), 560px); }
+.stage-full--fit.stage-full--photo-r .stage-full-img { left: auto; right: calc(25vw - var(--pw) / 2); }
+@media (max-width: 900px) {
+  .stage-full--fit.stage-full--photo-r { --pw: min(calc(100vw - 2 * var(--gutter)), calc(30svh * var(--ar))); }
+  .stage-full--fit.stage-full--photo-r .stage-full-img { right: auto; left: 50%; }
+}
+
+/* context 사진 — 위아래를 화면 높이로 꽉 채우고 오른쪽에 붙인다. 글 쪽(왼쪽) 가장자리는 바탕에 녹인다 (찰리 크리스천 화면과 같은 방식) */
+@media (min-width: 901px) {
+  .stage-full--fit.stage-full--photo-r { background: #0b0a09; }
+  .stage-full--fit.stage-full--photo-r .stage-full-img {
+    top: 0; bottom: 0; right: 0; left: auto; height: 100%; width: auto; max-width: none;
+    transform: none; box-shadow: none;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, rgba(0,0,0,.55) 14%, #000 42%);
+    mask-image: linear-gradient(90deg, transparent 0, rgba(0,0,0,.55) 14%, #000 42%);
+  }
+}
+
+/* ES-175 — 사진 위 글은 다른 본문과 같은 크기로 */
+:root[lang] #ch-es-175 .hx-full .block p { font-size: 21px; line-height: 1.45; }
+:root[lang="ko"] #ch-es-175 .hx-full .block p, :root[lang="ja"] #ch-es-175 .hx-full .block p { font-size: 18.5px; line-height: 1.78; }
+/* 전면 사진이 세로 찢김 경계로 들어올 때 — 경계가 패널 왼쪽 선 너머로 파여도 곧은 모서리 대신 어두운 바탕이 이어지게 */
+.hx-panel.hx-fullphoto.is-seamx { box-shadow: -240px 0 0 0 #0b0a09; }
+
+/* 컷어웨이 부분 누끼 — 잘린 왼쪽·위·아래 변이 화면 가장자리에 붙어 보이지 않게, 화면 높이 그대로 왼쪽 아래에 붙인다 */
+.hx-rise.hx-rise--edge { left: 0; top: auto; bottom: 0; height: var(--lh); }
+
+/* 컷어웨이 누끼 — 조금 작게. 들어올 때는 왼쪽에서 밀려 나오고, 다음 칸으로 넘어갈 때는 위로 올라간다.
+   작아져 위 변이 화면 안에 들어오므로 지판 위쪽은 바탕에 녹인다 */
+.hx-rise.hx-rise--edge {
+  transform: translate3d(calc((1 - var(--e, 1)) * -105%), calc(var(--lv, 0) * -120%), 0);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 22%);
+}
+
+/* 컷어웨이 — 바디 전체 누끼를 크게 깔고 오른쪽 위(컷어웨이)만 보이게. 넥 토막의 잘린 끝은 화면 윗변에 붙는다.
+   흐림 효과 없음. 나갈 때 위로 올라가면 바디 아랫부분이 잘림 없이 그대로 지나간다 */
+.hx-rise.hx-rise--edge {
+  left: -52svh; top: 0; bottom: auto; height: var(--lh);
+  -webkit-mask-image: none; mask-image: none;
+  transform: translate3d(calc((1 - var(--e, 1)) * -70%), calc(var(--lv, 0) * -105%), 0);
+}
+
+/* 갤러리 진입 — 옆으로 누운 기타(헤드가 오른쪽)가 화면 가운데를 가로지르고, 지나간 자리에 조각이 차례로 생긴다 (ES-175) */
+.gl-pass { position: absolute; left: 0; top: 50%; height: 40svh; width: auto; max-width: none; z-index: 3; pointer-events: none;
+  transform: translate3d(-100%, -50%, 0); visibility: hidden; will-change: transform;
+  filter: drop-shadow(0 2.4svh 3svh rgba(21, 19, 15, .28)); }
+.has-pass .gl-it { opacity: calc((.72 + var(--f, 0) * .28) * var(--rv, 0));
+  transform: translate3d(0, calc((1 - var(--rv, 0)) * 4svh), 0) scale(calc(.86 + var(--f, 0) * .14)); }
+
+/* 지나가는 기타 v2 — 트랙 위에서 화면 기준으로 움직인다(위치는 JS). 조각은 작은 크기에서 부드럽게 커지며 생긴다 */
+.gl-pass { top: 0; left: 0; z-index: 5; transform: translate3d(-200vw, 0, 0); }
+.has-pass .gl-it { opacity: calc((.72 + var(--f, 0) * .28) * var(--rv, 0));
+  transform: scale(calc((.86 + var(--f, 0) * .14) * (.55 + var(--rv, 0) * .45))); }
+
+/* 지나가는 기타 v3 — 화면 아래 75%가 보이는 높이로 고정, 조금 작게 */
+.gl-pass { height: 34svh; }
+
+/* 기타가 지나가는 갤러리 — 크기 변화의 기준을 각 조각의 기준선(위/아래)에 두어, 같은 선에 맞춘 사진과 글의 윗변·밑단이 어긋나지 않게 */
+.has-pass .gl-it { transform-origin: 0 0; }
+.has-pass .gl-it.gl-b { transform-origin: 0 100%; }
+
+/* 챕터 끝에서 제자리에 검게 덮이는 막 (exit: 'dark') + 그 뒤 경계 띠는 검정 그대로 */
+.hx-enddark { position: absolute; inset: 0; background: var(--night); opacity: 0; z-index: 30; pointer-events: none; }
+.seam[data-from="dark"][data-to="dark"] { background: var(--night); }
+/* ES-175 마지막 칸 — 사진 가장자리를 바탕에 녹이지 않는다 */
+.hx-photohalf.hx-phfit:not(.hx-dark):not(.side-r) .hx-ph img { -webkit-mask-image: none; mask-image: none; }
+
+/* ===== 3D 챕터 (model3d) =====
+   화면에 고정된 검은 무대. 카메라가 부품마다 다가가고, 글은 칸마다 반대편에 선다.
+   들머리: 앞 챕터 연도가 크게 떠 있다가 이 챕터 연도로 굴러가고, 줄어들며 어둠에서 기타가 떠오른다 */
+.chapter--model3d { padding: 0; }
+.m3-wrap { position: relative; }
+.m3-pin {
+  position: sticky; top: 0; height: 100svh; overflow: hidden; isolation: isolate;
+  background: var(--night); color: var(--paper-on-night);
+  --yfs: clamp(180px, 30vw, 520px);
+}
+/* 기타 뒤로 아주 옅은 빛 웅덩이 — 바라보는 점을 따라간다 */
+.m3-glow {
+  position: absolute; inset: 0; pointer-events: none; opacity: var(--gl, 0);
+  background: radial-gradient(52vmax 46vmax at calc(var(--gx, .5) * 100%) calc(var(--gy, .5) * 100%), rgba(201, 138, 52, .13), rgba(201, 138, 52, 0) 70%);
+}
+.m3-gl { position: absolute; inset: 0; opacity: var(--cv, 0); }
+.m3-gl canvas { display: block; width: 100%; height: 100%; }
+
+/* 연도 — 릴이 도는 동안 화면을 채웠다가 제목 뒤 제자리로 줄어든다(JS가 위치·크기·농도) */
+.m3-year {
+  position: absolute; left: calc(var(--gutter) - .03em); bottom: calc(18svh + var(--h2s) * .11 - var(--yfs) * .035);
+  --h2s: clamp(38px, 5.2vw, 86px); --cell: .8em;
+  font-family: var(--f-title); font-weight: 800; font-size: var(--yfs); line-height: var(--cell); height: var(--cell);
+  letter-spacing: -.07em; white-space: nowrap; color: #f2efe8; pointer-events: none;
+  transform-origin: 0 0; will-change: transform, opacity;
+}
+.m3-year .yr-d, .m3-year .yr-reel { display: inline-block; vertical-align: top; height: var(--cell); }
+.m3-year .yr-reel { clip-path: inset(0 -.3em); }
+.m3-year .yr-strip { display: flex; flex-direction: column; transform: translate3d(0, calc(var(--rp, 0) * var(--n) * var(--cell) * -1), 0); will-change: transform; }
+.m3-year .yr-strip i { font-style: normal; display: block; height: var(--cell); line-height: var(--cell); }
+
+.m3-title { position: absolute; left: var(--gutter); bottom: 18svh; z-index: 2; pointer-events: none; }
+.m3-title h2 {
+  font-family: var(--f-title); font-weight: 700; font-size: clamp(38px, 5.2vw, 86px); line-height: .95; letter-spacing: -.045em;
+  margin: 0; color: #f2efe8; white-space: nowrap;
+  opacity: var(--k1, 0); transform: translate3d(0, calc((1 - var(--k1, 0)) * 34px), 0);
+}
+.m3-title .ch-meta { margin-top: 18px; opacity: calc(var(--k2, 0) * .6); transform: translate3d(0, calc((1 - var(--k2, 0)) * 18px), 0); }
+
+/* 칸마다의 글 */
+.m3-t {
+  position: absolute; top: 50%; z-index: 2; width: min(31vw, 30em); opacity: 0; visibility: hidden; pointer-events: none;
+  transform: translate3d(0, calc(-50% + var(--ty, 0px)), 0);
+}
+.m3-t.side-l { left: var(--gutter); }
+.m3-t.side-r { right: calc(var(--gutter) + 110px); }      /* 오른쪽 레일(챕터 목록)과 겹치지 않게 */
+.m3-t .block { opacity: 1; transform: none; transition: none; max-width: none; }
+
+/* 불러오는 중 — 가는 선 하나와 숫자 */
+.m3-load { position: absolute; left: 50%; bottom: 14svh; z-index: 3; transform: translateX(-50%); display: grid; gap: 10px; justify-items: center;
+  font-family: var(--f-title); font-size: 11px; letter-spacing: .08em; color: var(--dim-on-night); }
+.m3-load[hidden] { display: none; }
+.m3-load i { position: relative; display: block; width: 160px; height: 1px; overflow: hidden; background: rgba(216, 210, 198, .18); }
+.m3-load i::after { content: ''; position: absolute; inset: 0; background: var(--paper-on-night); transform-origin: 0 50%; transform: scaleX(var(--lp, 0)); }
+
+/* 모델 출처(CC BY-NC) */
+.m3-credit { position: absolute; right: var(--gutter); bottom: 22px; z-index: 2; margin: 0; max-width: 52ch; text-align: right;
+  font-family: var(--f-title); font-size: 10.5px; line-height: 1.4; letter-spacing: .01em; color: var(--dim-on-night); opacity: .55; }
+
+@media (max-width: 1100px) { .m3-t.side-r { right: var(--gutter); } }
+@media (max-width: 900px) {
+  /* 좁은 화면 — 기타는 위쪽, 글은 아래쪽 판에. 아래로 어둡게 깔아 글이 읽히게 */
+  .m3-pin::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 60svh; z-index: 1; pointer-events: none;
+    background: linear-gradient(to top, rgba(11, 10, 9, .94) 38%, rgba(11, 10, 9, 0)); }
+  .m3-t, .m3-t.side-l, .m3-t.side-r { top: auto; bottom: 9svh; left: var(--gutter); right: var(--gutter); width: auto; max-height: 44svh; overflow: hidden;
+    transform: translate3d(0, var(--ty, 0px), 0); }
+  .m3-title { bottom: 12svh; }
+  .m3-year { bottom: calc(12svh + var(--h2s) * .11 - var(--yfs) * .035); --h2s: clamp(30px, 9.6vw, 46px); }
+  .m3-title h2 { font-size: clamp(30px, 9.6vw, 46px); }
+  .m3-credit { left: var(--gutter); right: auto; bottom: auto; top: 64px; text-align: left; max-width: 34ch; font-size: 9.5px; opacity: calc(var(--cr, 1) * .55); }
+  /* 글이 패널보다 길면 위로 흘러가는데, 윗변을 칼같이 자르지 않고 흐리게 */
+  .m3-t { -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 26px); mask-image: linear-gradient(to bottom, transparent 0, #000 26px); }
+  .m3-tin { padding-top: 26px; }
+  .m3-t .block p { font-size: 17px; line-height: 1.45; }
+}
+/* 글 쪽 어둠 — 글이 보이는 만큼(--sl, --sr) */
+.m3-scrim { position: absolute; top: 0; bottom: 0; width: 64vw; z-index: 1; pointer-events: none; }
+.m3-scrim.l { left: 0; opacity: var(--sl, 0); background: linear-gradient(to right, rgba(11, 10, 9, .93) 0, rgba(11, 10, 9, .9) 52%, rgba(11, 10, 9, 0) 100%); }
+.m3-scrim.r { right: 0; opacity: var(--sr, 0); background: linear-gradient(to left, rgba(11, 10, 9, .93) 0, rgba(11, 10, 9, .9) 52%, rgba(11, 10, 9, 0) 100%); }
+@media (max-width: 900px) { .m3-scrim { display: none; } }
+/* 이미지 칸 — 다른 챕터처럼 화면 절반을 위아래 꽉 채운다. 자기 쪽 가장자리에서 밀려 들어온다(--tx) */
+.m3-img {
+  position: absolute; top: 0; bottom: 0; z-index: 2; margin: 0; width: 50vw; overflow: hidden; visibility: hidden; pointer-events: none;
+  transform: translate3d(var(--tx, 0), 0, 0); will-change: transform;
+}
+.m3-img.side-l { left: 0; }
+.m3-img.side-r { right: 0; }
+.m3-img img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* 전면 영상 칸 — 화면 전체(--tx로 옆에서 밀려 들어오고 나간다) */
+.m3-video { position: absolute; inset: 0; z-index: 4; visibility: hidden; background: #000; transform: translate3d(var(--tx, 100%), 0, 0); will-change: transform; }
+@media (max-width: 900px) {
+  .m3-img, .m3-img.side-l, .m3-img.side-r { left: 0; right: 0; width: auto; bottom: auto; height: 45svh; }   /* 아래 글 판(위 47svh부터)과 겹치지 않게 */
+}
+/* 글을 아래쪽에 — 누운 기타처럼 장면이 가운데 띠를 차지할 때(textY: "b") */
+@media (min-width: 901px) {
+  .m3-t.pos-b { top: auto; bottom: 13svh; transform: translate3d(0, var(--ty, 0px), 0); }
+}
+/* 이미지 칸 — 글 쪽 가장자리를 바탕으로 부드럽게 녹인다 */
+.m3-img.side-l img { -webkit-mask-image: linear-gradient(90deg, #000 0, #000 58%, rgba(0, 0, 0, .55) 80%, transparent 100%); mask-image: linear-gradient(90deg, #000 0, #000 58%, rgba(0, 0, 0, .55) 80%, transparent 100%); }
+.m3-img.side-r img { -webkit-mask-image: linear-gradient(270deg, #000 0, #000 58%, rgba(0, 0, 0, .55) 80%, transparent 100%); mask-image: linear-gradient(270deg, #000 0, #000 58%, rgba(0, 0, 0, .55) 80%, transparent 100%); }
+@media (max-width: 900px) {
+  .m3-img.side-l img, .m3-img.side-r img { -webkit-mask-image: linear-gradient(180deg, #000 0, #000 62%, rgba(0, 0, 0, .55) 82%, transparent 100%); mask-image: linear-gradient(180deg, #000 0, #000 62%, rgba(0, 0, 0, .55) 82%, transparent 100%); }
+}

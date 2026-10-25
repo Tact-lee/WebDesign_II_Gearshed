@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GEARSHED — Timeline</title>
+<meta name="description" content="A scroll through the instruments, amplifiers and effects that built the electric guitar, 1931 to 1998." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/timeline.css" />
+</head>
+<body class="is-loading booting">
+
+<div id="boot" aria-hidden="true"></div>
+
+<div id="grain" aria-hidden="true"></div>
+
+<header class="topbar boot-fade">
+  <a class="brand" href="#top">GEAR<span>SHED</span></a>
+  <nav class="topnav" aria-label="Sections">
+    <a href="#top" class="is-on" data-t="nav.timeline">Timeline</a>
+    <a href="#colophon" data-t="nav.sources">Sources</a>
+  </nav>
+  <div class="lang" role="group" aria-label="Language">
+    <button class="is-on" data-lang="en">EN</button>
+    <button data-lang="ko">KR</button>
+    <button data-lang="ja">JP</button>
+  </div>
+</header>
+
+<nav id="rail" class="boot-fade" aria-label="Chapters"><ol></ol></nav>
+<div id="progress" class="boot-fade"><span></span></div>
+<div id="nowyear" class="boot-fade" aria-hidden="true"></div>
+
+<main id="top">
+  <section class="intro">
+    <div class="intro-inner">
+      <p class="eyebrow boot-rise"><span class="dot"></span><span data-t="intro.eyebrow">GEARSHED — Volume I</span></p>
+      <h1 class="intro-title"><span class="t-line" data-t="intro.title">Timeline</span></h1>
+      <p class="intro-sub boot-rise" data-t="intro.sub">Forty-one objects that decided what an electric guitar is, what it sounds like, and who gets to own one. Scroll.</p>
+      <dl class="intro-stats boot-rise">
+        <div><dt data-t="stat.chapters">Chapters</dt><dd data-stat="chapters">41</dd></div>
+        <div><dt data-t="stat.span">Span</dt><dd data-stat="years">1931–1998</dd></div>
+      </dl>
+    </div>
+    <div class="scroll-cue boot-rise"><span data-t="scroll">Scroll</span><i></i></div>
+  </section>
+
+  <div id="tl" aria-busy="true"></div>
+
+  <footer id="colophon">
+    <div class="colophon-inner">
+      <h2 data-t="colophon.title">Colophon</h2>
+      <p data-t="colophon.body">Research notes, patent scans and open questions live beside this page in the project repository. Every claim in a chapter carries a source entry; contested claims are marked rather than resolved.</p>
+      <p class="small" data-t="colophon.note">Layout preview — media slots are placeholders. 3D is loaded only where a model exists.</p>
+    </div>
+  </footer>
+</main>
+
+<script src="js/timeline.js" type="module"></script>
+</body>
+</html>
