@@ -5,9 +5,9 @@
    - 스크롤 연출은 rAF 한 개 + IntersectionObserver로만 돌린다
    ========================================================= */
 
-import { makeSil, shapeOf } from './silhouettes.js?v=202610270749';
-import { cutout } from './media.js?v=202610270749';
-import { m3Prepare, m3Near, m3Draw, m3Status } from './model3d.js?v=202610270749';
+import { makeSil, shapeOf } from './silhouettes.js?v=202610270757';
+import { cutout } from './media.js?v=202610270757';
+import { m3Prepare, m3Near, m3Draw, m3Status } from './model3d.js?v=202610270757';
 
 const $ = (s, r = document) => r.querySelector(s);
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -59,7 +59,6 @@ const BOOT = {
   tailSpin: 9,           // 글자가 앉기 전에 지나가는 글자 수
   tailEase: 'cubic-bezier(.18, 1, .3, 1)',
   follow: [              // 전환 이후 뒤따라 들어오는 요소들
-    ['.eyebrow', 'boot-rise', 680],
     ['.topbar', 'boot-fade', 760],
     ['.intro-sub', 'boot-rise', 790],
     ['.intro-stats', 'boot-rise', 890],
@@ -292,7 +291,7 @@ document.querySelectorAll('.lang button[data-lang]').forEach((b) => {
 });
 if (new URLSearchParams(location.search).has('notes')) document.body.classList.add('show-notes');
 
-const data = await fetch(`data/timeline.${lang}.json?v=202610270749`).then((r) => r.json());
+const data = await fetch(`data/timeline.${lang}.json?v=202610270757`).then((r) => r.json());
 
 /* 작업 범위 — 지금은 이 챕터까지만 그린다. null 이면 전부 */
 const BUILD_UNTIL = 'stratocaster';
