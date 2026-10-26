@@ -1436,3 +1436,56 @@ figure.hx-pair img { filter: none; }
 @media (max-width: 900px) {
   .m3-img.side-l img, .m3-img.side-r img { -webkit-mask-image: linear-gradient(180deg, #000 0, #000 62%, rgba(0, 0, 0, .55) 82%, transparent 100%); mask-image: linear-gradient(180deg, #000 0, #000 62%, rgba(0, 0, 0, .55) 82%, transparent 100%); }
 }
+
+/* ===== Les Paul Goldtop ===== */
+/* 사진 위 글은 다른 본문과 같은 크기로 (ES-175와 같게) */
+:root[lang] #ch-les-paul-goldtop .hx-full .block p { font-size: 21px; line-height: 1.45; }
+:root[lang="ko"] #ch-les-paul-goldtop .hx-full .block p, :root[lang="ja"] #ch-les-paul-goldtop .hx-full .block p { font-size: 18.5px; line-height: 1.78; }
+/* 오른쪽에 선 인쇄물 — 연도 레일과 겹치지 않게 펼침 패널과 같은 만큼 비운다 */
+@media (min-width: 1101px) {
+  .hx-panel.hx-sheet.side-r { padding-right: calc(var(--gutter) + 1.5vw + 96px); }
+}
+/* 좁은 화면 — 긴 제목(Gibson Les Paul Goldtop)은 줄을 바꾼다. 아래에 붙여 둔 상자라 윗줄이 위로 늘고, 마지막 줄 기준선은 그대로 */
+@media (max-width: 900px) {
+  .ch-head.has-entry--half h2 { white-space: normal; max-width: calc(100vw - 2 * var(--gutter)); }
+}
+/* 같은 시대 안에서 바탕만 바뀌는 구역 (Telecaster 3D → Les Paul) — 경계 띠도 위 여백도 없이 앞 화면에 바로 붙는다 */
+.era--cont { padding-top: 0; }
+/* 위에서 내려오는 누끼 (Les Paul requests) — 잘린 지판 끝이 화면 윗변에 닿는 자리에서 멈춘다. 내려오는 동안에도 잘린 끝은 늘 화면 위에 있다 */
+.hx-rise.hx-rise--top { transform: translate3d(0, calc((1 - var(--e, 1)) * -100svh), 0); }
+@media (max-width: 900px) { .hx-rise.hx-rise--top { --lt: 0svh; } }
+
+/* ===== 반쪽 들머리 — 제목·연도를 바디 가장자리에 맞춘다 =====
+   바디는 화면 높이(svh)를 따라 커지는데 제목은 화면 폭(%)에 묶여 있어서, 세로가 긴 창에서는 제목이 바디 밑으로 들어갔다.
+   바디 가장자리(--ecx ± --eh × .375)에서 틈(--tg)만큼 떨어진 선을 제목의 기준으로 쓰고,
+   연도는 그 선과 화면 끝(레일·여백) 사이에 꼭 맞는 크기로 줄인다. 챕터마다 --tg · --yx(오른쪽 +) · --yy(위 +)로 다듬는다 */
+@media (min-width: 901px) {
+  /* 바디가 왼쪽 (ES-175, Les Paul) — 제목은 바디 오른쪽에서 시작, 연도는 그 선에서 레일 앞까지 */
+  .chapter .ch-head.has-entry--half.has-entry--left {
+    --tl: max(28vw, calc(var(--ecx, 2vw) + var(--eh, 115svh) * .375 + var(--tg, 3vw)));
+    --yfs: clamp(200px, min(38vw, calc((100vw - var(--tl) - var(--gutter) - 96px) / 2.2)), 600px);
+  }
+  .ch-head.has-entry--left h2, .ch-head.has-entry--left .ch-meta { left: var(--tl); }
+  .ch-head.has-entry--left .ch-bgyear--in {
+    left: auto; right: calc(var(--gutter) + 96px - var(--yx, 0px));
+    bottom: calc(var(--tb) + var(--h2s) * .11 - var(--yfs) * .035 + var(--yy, 0px));
+  }
+  /* 바디가 오른쪽 (ES-150) — 제목은 바디 왼쪽에서 끝나고, 연도는 제목 끝에 맞춰 왼쪽 여백까지 */
+  .chapter .ch-head.has-entry--half:not(.has-entry--left) {
+    --tr: max(28vw, calc(100vw - var(--ecx, 98vw) + var(--eh, 115svh) * .375 + var(--tg, 3vw)));
+    --yfs: clamp(200px, min(38vw, calc((100vw - var(--tr) - var(--gutter)) / 2.2)), 600px);
+  }
+  .ch-head.has-entry--half:not(.has-entry--left) h2, .ch-head.has-entry--half:not(.has-entry--left) .ch-meta { right: var(--tr); }
+  .ch-head.has-entry--half:not(.has-entry--left) .ch-bgyear--in {
+    right: calc(var(--tr) - .04em - var(--yx, 0px));
+    bottom: calc(var(--tb) + var(--h2s) * .11 - var(--yfs) * .035 + var(--yy, 0px));
+  }
+}
+
+/* ===== 3D 챕터의 문서·인쇄물 칸 (스트라토캐스터) — 사진처럼 꽉 채워 자르지 않고, 반쪽 화면 가운데에 온전히 놓는다 ===== */
+.m3-img.is-fit img { object-fit: contain; padding: 11svh 5vw 9svh; -webkit-mask-image: none; mask-image: none; filter: drop-shadow(0 2.4svh 4svh rgba(0, 0, 0, .6)); }
+@media (max-width: 900px) { .m3-img.is-fit img { padding: 78px 8vw 2svh; -webkit-mask-image: none; mask-image: none; } }
+
+/* 들머리 연출 중 스크롤 잠금 — 모바일의 관성 스크롤까지 멈춘다. 스크롤바 자리는 늘 비워 두어 잠글 때 폭이 흔들리지 않게 */
+html { scrollbar-gutter: stable; }
+html.scroll-lock { overflow: hidden; }

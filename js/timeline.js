@@ -299,7 +299,9 @@ if (new URLSearchParams(location.search).has('notes')) document.body.classList.a
 const data = await fetch(`data/timeline.${lang}.json`).then((r) => r.json());
 
 /* 작업 범위 — 지금은 이 챕터까지만 그린다. null 이면 전부 */
-const BUILD_UNTIL = 'broadcaster';
+const BUILD_UNTIL = 'stratocaster';
+const BUILD_SKIP = ['bassman'];          // 순서상 앞이지만 아직 작업하지 않은 챕터
+data.chapters = data.chapters.filter((c) => !BUILD_SKIP.includes(c.id));
 if (BUILD_UNTIL) {
   const cut = data.chapters.findIndex((c) => c.id === BUILD_UNTIL);
   if (cut >= 0) {
@@ -686,7 +688,7 @@ if (p.layout === 'gallery') {
 if (p.layout === 'riseimg') {
   // 패널이 밀려 들어온 뒤 누끼가 아래에서 솟아 왼쪽 반을 채운다. 글은 오른쪽
   return `<section class="hx-panel hx-riseimg" data-k="${k}" data-enter="${p.enter || 'slide'}" style="--lh:${p.h || '115svh'};--lt:${p.top || '-22svh'}">`
-    + `<img class="hx-rise${p.anchor === 'edge' ? ' hx-rise--edge' : ''}" src="${dir + p.image}" alt="" decoding="async" loading="lazy">`
+    + `<img class="hx-rise${p.anchor === 'edge' ? ' hx-rise--edge' : ''}${p.from === 'top' ? ' hx-rise--top' : ''}" src="${dir + p.image}" alt="" decoding="async" loading="lazy">`
     + `<div class="hx-text">${blockHTML(blk(p.block), i, false)}</div></section>`;
 }
 if (p.layout === 'collage') {
@@ -823,12 +825,15 @@ function head(ch) {
   const darkIn = half && a.entry.dark === 'in';                 // 앞 화면이 검정 — 경계 없이 검정으로 이어진다          // 반쪽 기타 들머리: 오른쪽에 크게, 위에서 내려온다
   // 들머리 — 좌측에서 헤드가 솟아 들어오고, 타이틀은 그 위에 얹힌다
   const entry = a.entry && a.dir
-    ? `<div class="ch-entry${half ? ' ch-entry--half' : ''}" aria-hidden="true"${half ? ` style="--eh:${a.entry.h};--ecx:${a.entry.cx};--et:${a.entry.top}"` : ''}><img src="${
+    ? `<div class="ch-entry${half ? ' ch-entry--half' : ''}" aria-hidden="true"><img src="${
         a.dir.replace(/\/$/, '')}/${a.entry.src}" alt="" decoding="async" loading="lazy"></div>`
     : '';
+  // 반쪽 들머리의 치수는 머리글에 둔다 — 제목·연도가 바디 가장자리를 기준으로 자리를 잡는다. tg: 바디와 제목 사이 틈, yx·yy: 연도를 챕터마다 옮기는 값
+  const ev = half ? Object.entries({ eh: a.entry.h, ecx: a.entry.cx, et: a.entry.top, tg: a.entry.tg, yx: a.entry.yx, yy: a.entry.yy })
+    .filter(([, x]) => x != null && x !== '').map(([k, x]) => `;--${k}:${x}`).join('') : '';
   return `
     ${entry ? '' : `<div class="ch-bgyear" aria-hidden="true">${ch.year}</div>`}
-    <header class="ch-head${entry ? ' has-entry' : ''}${half ? ' has-entry--half' : ''}${darkIn ? ' has-entry--darkin' : ''}${half && a.entry.side === 'l' ? ' has-entry--left' : ''}"${entry ? ' style="--p:0"' : ''}>${half ? '<div class="ch-dark" aria-hidden="true" hidden></div><canvas class="ch-tear" aria-hidden="true" hidden></canvas>' : ''}${entry}
+    <header class="ch-head${entry ? ' has-entry' : ''}${half ? ' has-entry--half' : ''}${darkIn ? ' has-entry--darkin' : ''}${half && a.entry.side === 'l' ? ' has-entry--left' : ''}"${entry ? ` style="--p:0${ev}"` : ''}>${half ? '<div class="ch-dark" aria-hidden="true" hidden></div><canvas class="ch-tear" aria-hidden="true" hidden></canvas>' : ''}${entry}
       <div class="ch-title">
         ${entry ? `<div class="ch-bgyear ch-bgyear--in" aria-hidden="true">${half ? yearReel(ch) : ch.year}</div>` : ''}
         <h2><span class="ch-brand">${esc(ch.brand)}</span> ${esc(ch.model)}${ch.nickname ? `<span class="ch-nick">“${esc(ch.nickname)}”</span>` : ''}</h2>
@@ -932,7 +937,7 @@ model3d(sec, ch) {
     return `<div class="m3-t side-${s.side || 'l'}${s.textY === 'b' ? ' pos-b' : ''}" data-k="${k}"><div class="m3-tin">${blockHTML(body, i, false)}</div></div>`;
   }).join('');
   const imgs = shots.map((s, k) => (s.image
-    ? `<figure class="m3-img side-${s.side === 'r' ? 'l' : 'r'}" data-k="${k}"><img src="${a.dir.replace(/\/$/, '')}/${s.image}" alt="" decoding="async" loading="lazy"></figure>` : '')).join('');
+    ? `<figure class="m3-img side-${s.side === 'r' ? 'l' : 'r'}${s.fit ? ' is-fit' : ''}" data-k="${k}"><img src="${a.dir.replace(/\/$/, '')}/${s.image}" alt="" decoding="async" loading="lazy"></figure>` : '')).join('');   // fit: 문서·인쇄물은 자르지 않고 온전히
   // 전면 영상 칸 — ES-150 영상과 같은 방식(UI 없음, 시작 지점, 자막 끔, 소리는 서서히)
   const vids = shots.map((s, k) => (s.video
     ? `<section class="m3-video hx-vfull" data-k="${k}" data-yt="${s.video.youtube}" data-start="${s.video.start || 0}">`
@@ -1027,30 +1032,31 @@ model3d(sec, ch) {
 
 let eraEl = null;
 let prevEra = null;
+let prevTone = null;
 let lastCh = null;
+const endsDark = (c) => { const lp = c?.assets?.stage?.panels; return !!(lp && lp.length && lp[lp.length - 1].exit === 'dark'); };
 
 data.chapters.forEach((ch) => {
   const era = data.eras.find((e) => e.id === ch.era);
+  const tone = ch.assets?.tone || era.tone;          // 챕터가 바탕을 따로 정하면(assets.tone) 같은 시대 안에서도 바탕 구역을 새로 연다
 
-  if (ch.era !== prevEra) {
-    if (prevEra) {
-      const prevTone = data.eras.find((e) => e.id === prevEra).tone;
+  if (ch.era !== prevEra || tone !== prevTone) {
+    if (prevEra && ch.era !== prevEra) {
       const seam = document.createElement('div');
       seam.className = 'seam';
-      seam.dataset.to = era.tone;
-      seam.dataset.from = prevTone;
-      const lp = lastCh?.assets?.stage?.panels;
-      if (lp && lp.length && lp[lp.length - 1].exit === 'dark') seam.dataset.from = 'dark';   // 앞 챕터가 검게 덮이며 끝나면 경계 띠도 검정 그대로
+      seam.dataset.to = tone;
+      seam.dataset.from = endsDark(lastCh) ? 'dark' : prevTone;   // 앞 챕터가 검게 덮이며 끝나면 경계 띠도 검정 그대로
       seam.innerHTML = '<div class="seam-fill"></div>';
       frag.appendChild(seam);
     }
     eraEl = document.createElement('section');
-    eraEl.className = `era era--${era.tone}`;
+    eraEl.className = `era era--${tone}${ch.era === prevEra ? ' era--cont' : ''}`;   // 같은 시대 안에서 바탕만 바뀌면 경계 띠 없이 바로 잇는다
     eraEl.dataset.era = era.id;
-    eraEl.dataset.tone = era.tone;
+    eraEl.dataset.tone = tone;
     eraEl.style.setProperty('--accent', era.accent);
     frag.appendChild(eraEl);
     prevEra = ch.era;
+    prevTone = tone;
   }
 
   const sec = document.createElement('section');
@@ -1072,7 +1078,7 @@ data.chapters.forEach((ch) => {
 const endSeam = document.createElement('div');
 endSeam.className = 'seam';
 endSeam.dataset.to = 'dark';
-endSeam.dataset.from = data.eras[data.eras.length - 1].tone;
+endSeam.dataset.from = endsDark(lastCh) ? 'dark' : prevTone;
 endSeam.innerHTML = '<div class="seam-fill"></div>';
 frag.appendChild(endSeam);
 
@@ -1085,8 +1091,33 @@ $('[data-stat="years"]').textContent = `${data.stats.years[0]}–${data.stats.ye
 
 railList.addEventListener('click', (e) => {
   const b = e.target.closest('button');
-  if (b) document.getElementById(b.dataset.target)?.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth' });
+  const sec = b && document.getElementById(b.dataset.target);
+  if (!sec) return;
+  // 지나가는 챕터의 들머리는 건너뛴다 — 굴러가지 않고 곧장 옮겨 가서, 도착한 챕터의 들머리만 처음부터 보인다
+  const hd = sec.querySelector('.ch-head');
+  if (hd) { hd._ts = 0; hd._pv = null; hd.dataset.yv = '0'; }
+  if (sec._m3) sec._m3.ts = 0;
+  unlockScroll();
+  scrollTo({ top: Math.round(sec.getBoundingClientRect().top + scrollY), behavior: 'instant' });
 });
+
+/* 들머리 연출 동안 스크롤 잠금 — 연도 릴이 돌고 기타·제목이 나오는 사이에는 입력을 받지 않고 그 자리에 세워 둔다.
+   잠그는 자리는 그 머리글(3D 챕터는 무대)이 화면 윗변에 닿는 스크롤 위치. 모델을 받느라 오래 걸리면 6초 뒤에 푼다 */
+const LOCK_MAX = 6000;
+let lockWant = null;          // 이번 프레임에 잠가 둘 스크롤 위치 (없으면 null)
+let lockOn = false, lockStart = 0, lockSpent = false, lockY = 0;
+function unlockScroll() { lockOn = false; lockSpent = false; document.documentElement.classList.remove('scroll-lock'); }
+function updateLock(now) {
+  if (lockWant != null && !lockOn && !lockSpent) { lockOn = true; lockStart = now; document.documentElement.classList.add('scroll-lock'); }
+  if (lockOn) {
+    if (lockWant == null || now - lockStart > LOCK_MAX) {
+      lockOn = false; document.documentElement.classList.remove('scroll-lock');
+      lockSpent = lockWant != null;          // 시간이 다 돼서 풀었으면 이 자리를 벗어날 때까지 다시 잠그지 않는다
+    } else lockY = lockWant;
+  }
+  if (lockWant == null) lockSpent = false;
+}
+addEventListener('touchmove', (e) => { if (lockOn) e.preventDefault(); }, { passive: false });
 
 /* ---------- 3. 스크롤 엔진 ---------- */
 const chapters = [...document.querySelectorAll('.chapter')];
@@ -1466,6 +1497,7 @@ function m3Frame(el, h) {
   // 들머리 — 핀이 거의 도착하면(위 12%) 시간이 흐르고, 벗어나면 되감긴다
   const inPlace = REDUCED || wr.top <= h * 0.12;
   g.ts = REDUCED ? 3.6 : clamp((g.ts || 0) + (inPlace ? dt : -dt * 2.2), 0, 3.6);
+  if (!REDUCED && g.ts < 3.6 && wr.top <= h * 0.12 && wr.top > -h * 0.15) lockWant = scrollY + wr.top;   // 연출 중 — 무대 첫 자리에 세워 둔다
   const stt = m3Status(el);
   if (stt && (stt.status === 'loading' || stt.status === 'idle')) g.ts = Math.min(g.ts, 1.7);   // 모델이 준비될 때까지 1951에서 기다린다
   const ts = g.ts;
@@ -1581,6 +1613,7 @@ let headDark = false;
 function frame() {
   const h = innerHeight;
   headDark = false;
+  lockWant = null;
 
   for (const el of live) {
     const r = el.getBoundingClientRect();
@@ -1607,6 +1640,7 @@ if (hd.classList.contains('has-entry--half')) {
 const inPlace = REDUCED || hr.top <= h * 0.12;
 // 순서: 앞 챕터 연도(1931)가 진하게 떠 있다가 → 슬롯처럼 이 챕터 연도로 굴러가고 → 옅어지며 → 기타가 내려오고 → 제목이 나온다
 hd._ts = Math.min(3.4, Math.max(0, (hd._ts || 0) + (inPlace ? dtH : -dtH * 2.2)));
+if (!REDUCED && hd._ts < 3.4 && hr.top <= h * 0.12 && hr.top > -h * 0.15) lockWant = scrollY + hr.top;   // 연출 중 — 머리글 자리에 세워 둔다
 const ts = REDUCED ? 3.4 : hd._ts;
 const m = clamp((ts - 0.25) / 1.4);
 const rp = 1 - Math.pow(1 - m, 3);                         // 빠르게 돌다 천천히 선다
@@ -1744,6 +1778,7 @@ L.style.opacity = next <= 0 ? '0' : '1';
   });
   if (night !== onNight) { onNight = night; document.body.classList.toggle('on-night', night); }
 
+  updateLock(performance.now());
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
@@ -1835,6 +1870,7 @@ return clamp(best, 0, maxY());
   addEventListener('wheel', (e) => {
     if (e.ctrlKey || document.body.classList.contains('booting')) return;   // 확대·시퀀스 중에는 건드리지 않는다
     e.preventDefault();
+    if (lockOn) return;                                                      // 들머리 연출 중 — 입력을 버린다
     const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? innerHeight : 1;
     const dy = clamp(e.deltaY * unit * FEEL.wheel, -FEEL.maxStep, FEEL.maxStep);
     if (dy) dir = Math.sign(dy);
@@ -1847,7 +1883,9 @@ return clamp(best, 0, maxY());
     const y = scrollY;
     if (Math.abs(y - lastSet) > 1.5) {           // 키보드·스크롤바·앵커 이동 — 따라가지 않고 받아들인다
       cur = target = y;
-    } else if (Math.abs(target - cur) > 0.1) {
+    }
+    if (lockOn) target = lockY;                  // 들머리 연출 중 — 머리글 자리로 붙여 세운다(굴리던 기세가 지나쳐 가지 않게)
+    if (Math.abs(target - cur) > 0.1) {
       cur += (target - cur) * FEEL.ease;
       if (Math.abs(target - cur) < 0.3) cur = target;
       scrollTo({ top: cur, behavior: 'instant' });
