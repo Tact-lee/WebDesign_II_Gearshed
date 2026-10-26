@@ -262,16 +262,12 @@ Promise.race([
 ]).then(runBoot);
 
 /* ---------- 1. 데이터 ---------- */
-/* 언어: ?lang= → 저장값 → 문서 기본값 순으로 고른다 */
+/* 언어: ?lang= 이 있으면 그 언어, 없으면 늘 영어(문서 기본값). 고른 언어를 저장해 두지 않는다 — 첫 화면은 언제나 영어 */
 const LANGS = ['en', 'ko', 'ja'];
 const ALIAS = { kr: 'ko', jp: 'ja' };                        // 표기는 EN / KR / JP, 내부 코드는 en / ko / ja
 const qraw = new URLSearchParams(location.search).get('lang');
 const qp = ALIAS[qraw] || qraw;
-let stored = null;
-try { stored = localStorage.getItem('gearshed-lang'); } catch (e) { /* 사생활 모드 */ }
-const lang = LANGS.includes(qp) ? qp
-           : LANGS.includes(stored) ? stored
-           : (document.documentElement.lang || 'en');
+const lang = LANGS.includes(qp) ? qp : (document.documentElement.lang || 'en');
 document.documentElement.lang = lang;
 
 // CJK는 본문 글꼴이 따로 필요하다. 해당 언어일 때만 받아 온다
@@ -287,9 +283,9 @@ document.querySelectorAll('.lang button[data-lang]').forEach((b) => {
   b.classList.toggle('is-on', b.dataset.lang === lang);
   b.addEventListener('click', () => {
     if (b.dataset.lang === lang) return;
-    try { localStorage.setItem('gearshed-lang', b.dataset.lang); } catch (e) { /* 무시 */ }
     const u = new URL(location.href);
-    u.searchParams.set('lang', b.dataset.lang);
+    if (b.dataset.lang === 'en') u.searchParams.delete('lang');   // 영어는 기본 주소 그대로
+    else u.searchParams.set('lang', b.dataset.lang);
     u.hash = '';
     location.href = u.toString();
   });
