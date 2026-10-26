@@ -5,9 +5,9 @@
    - 스크롤 연출은 rAF 한 개 + IntersectionObserver로만 돌린다
    ========================================================= */
 
-import { makeSil, shapeOf } from './silhouettes.js?v=202610270747';
-import { cutout } from './media.js?v=202610270747';
-import { m3Prepare, m3Near, m3Draw, m3Status } from './model3d.js?v=202610270747';
+import { makeSil, shapeOf } from './silhouettes.js?v=202610270749';
+import { cutout } from './media.js?v=202610270749';
+import { m3Prepare, m3Near, m3Draw, m3Status } from './model3d.js?v=202610270749';
 
 const $ = (s, r = document) => r.querySelector(s);
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -292,7 +292,7 @@ document.querySelectorAll('.lang button[data-lang]').forEach((b) => {
 });
 if (new URLSearchParams(location.search).has('notes')) document.body.classList.add('show-notes');
 
-const data = await fetch(`data/timeline.${lang}.json?v=202610270747`).then((r) => r.json());
+const data = await fetch(`data/timeline.${lang}.json?v=202610270749`).then((r) => r.json());
 
 /* 작업 범위 — 지금은 이 챕터까지만 그린다. null 이면 전부 */
 const BUILD_UNTIL = 'stratocaster';
