@@ -1132,7 +1132,7 @@ figure.hx-pair img { filter: none; }
 .hx-panel.hx-riseimg { overflow: hidden; }
 .hx-rise {
   position: absolute; height: var(--lh); width: auto; max-width: none; top: var(--lt);
-  left: calc(25vw - var(--lh) * .375);
+  left: calc(25vw - var(--lh) * var(--la, .75) / 2);   /* --la: 누끼의 가로세로 비 — 기본은 기타 바디(.75) */
   transform: translate3d(0, calc((1 - var(--e, 1)) * 75svh), 0);
   filter: drop-shadow(0 2.4svh 3svh rgba(21, 19, 15, .28));
   will-change: transform; pointer-events: none;
@@ -1378,7 +1378,7 @@ figure.hx-pair img { filter: none; }
   transform: translate3d(0, calc(-50% + var(--ty, 0px)), 0);
 }
 .m3-t.side-l { left: var(--gutter); }
-.m3-t.side-r { right: calc(var(--gutter) + 110px); }      /* 오른쪽 레일(챕터 목록)과 겹치지 않게 */
+.m3-t.side-r { right: calc(var(--gutter) + 135px); }      /* 오른쪽 레일(챕터 목록)과 겹치지 않게 */
 .m3-t .block { opacity: 1; transform: none; transition: none; max-width: none; }
 
 /* 불러오는 중 — 가는 선 하나와 숫자 */
@@ -1485,7 +1485,103 @@ figure.hx-pair img { filter: none; }
 /* ===== 3D 챕터의 문서·인쇄물 칸 (스트라토캐스터) — 사진처럼 꽉 채워 자르지 않고, 반쪽 화면 가운데에 온전히 놓는다 ===== */
 .m3-img.is-fit img { object-fit: contain; padding: 11svh 5vw 9svh; -webkit-mask-image: none; mask-image: none; filter: drop-shadow(0 2.4svh 4svh rgba(0, 0, 0, .6)); }
 @media (max-width: 900px) { .m3-img.is-fit img { padding: 78px 8vw 2svh; -webkit-mask-image: none; mask-image: none; } }
+/* 오른쪽에 선 문서·사진 — 오른쪽 레일(챕터 목록)과 겹치지 않게 그만큼 비운다 */
+@media (min-width: 1101px) { .m3-img.side-r.is-fit img { padding-right: calc(5vw + 135px); } }
 
 /* 들머리 연출 중 스크롤 잠금 — 모바일의 관성 스크롤까지 멈춘다. 스크롤바 자리는 늘 비워 두어 잠글 때 폭이 흔들리지 않게 */
 html { scrollbar-gutter: stable; }
 html.scroll-lock { overflow: hidden; }
+
+/* 네모난 물건의 무대 (stage.box — Bassman) — 두 대가 인용 칸을 침범하지 않는 높이로 줄이고, 뒷면은 뒤집지 않은 채 아래에서 솟는다 */
+.stage--whole.stage--box { --hs: min(62svh, calc(((100vw - var(--qw)) / 2 - max(var(--se, 16px), var(--sr, 0px)) - 40px) / var(--sa, 1))); }
+.stage--whole.stage--box .stage-br {
+  transform: translate3d(calc(var(--x, 0) * (30vw + var(--hs) * .45)), calc((1 - var(--s2, 0)) * (50svh + var(--hs) / 2 + 6svh)), 0);
+}
+@media (max-width: 900px) {
+  /* 좁은 화면 — 눕히지 않고 그대로 위·아래에 작게 */
+  .stage--whole.stage--box { --L: min(calc(50vw / var(--sa, 1)), 22svh); }
+  .stage--whole.stage--box .stage-tl {
+    left: calc(50% - var(--L) * var(--sa, 1) / 2); top: 64px;
+    transform: translate3d(calc(var(--x, 0) * -1 * (55vw + var(--L))), calc((1 - var(--s1, 0)) * -1 * (64px + var(--L) + 6svh)), 0);
+  }
+  .stage--whole.stage--box .stage-br {
+    right: auto; left: calc(50% - var(--L) * var(--sa, 1) / 2); top: calc(100svh - 40px - var(--L));
+    transform: translate3d(calc(var(--x, 0) * (55vw + var(--L))), calc((1 - var(--s2, 0)) * (40px + var(--L) + 6svh)), 0);
+  }
+  /* 솟는 누끼 — 가로로 넓은 물건은 화면 폭에 맞춰 줄이고 가운데에 */
+  .hx-rise.hx-rise--ar { --lh: min(62svh, calc(90vw / var(--la))); left: calc(50vw - var(--lh) * var(--la) / 2); }
+}
+/* 갤러리 속 누끼 — 네모 그림자 대신 윤곽을 따라 그림자 */
+.gl-cut img { box-shadow: none; filter: drop-shadow(0 1.8svh 2.2svh rgba(21, 19, 15, .26)); }
+
+/* ===== 아래에서 솟는 들머리 (entry.side = "c", Bassman) =====
+   물건이 화면 아래 가운데에서 솟아 절반이 조금 안 되게(--ev) 보이고, 제목·연도는 그 위 가운데에 선다.
+   스크롤하면 잘리지 않고 그대로 위로 올라간다 */
+.chapter .ch-head.has-entry--half.has-entry--rise {
+  --ev: .44; --ear: 1;
+  --vis: calc(var(--eh, 95svh) * var(--ev));                 /* 화면 안에 보이는 높이 */
+  --tb: calc(var(--vis) + 7svh);                             /* 제목 밑단 */
+  --yfs: clamp(150px, min(30vw, calc((100svh - var(--tb) - 88px) / .76)), 560px);
+}
+/* 머리글 아래로 넘치는 몸통도 그대로 보이게 — 스크롤하면 잘리지 않고 통째로 올라간다 */
+.ch-head.has-entry--rise .ch-entry.ch-entry--half { clip-path: inset(0 -10vw -100svh -10vw); }
+.ch-head.has-entry--rise .ch-entry.ch-entry--half img {
+  left: calc(var(--ecx, 50vw) - var(--eh, 95svh) * var(--ear) / 2); top: calc(100% - var(--vis));   /* --ecx: 가로 중심 (기본은 화면 가운데) */
+  transform: translate3d(0, calc((1 - var(--p, 0)) * (var(--vis) + 10svh) - var(--lv, 0) * 100svh), 0);   /* --lv: 머리글이 빠지는 만큼 더 빨리 올라간다 */
+}
+.chapter .ch-head.has-entry--half.has-entry--rise h2 {
+  left: 0; right: 0; bottom: var(--tb); text-align: center;
+  opacity: clamp(0, calc(var(--k1) * 3), 1); transform: translate3d(0, calc((1 - var(--k1)) * 40px), 0);
+}
+.chapter .ch-head.has-entry--half.has-entry--rise .ch-meta {
+  left: 0; right: 0; bottom: calc(var(--tb) - 38px); justify-content: center;
+  transform: translate3d(0, calc((1 - var(--k3)) * 24px), 0);
+}
+.chapter .ch-head.has-entry--half.has-entry--rise .ch-bgyear--in {
+  left: 0; right: 0; margin: 0 auto; width: max-content;
+  bottom: calc(var(--tb) + var(--h2s) * .11 - var(--yfs) * .035 + var(--yy, 0px));
+}
+@media (max-width: 900px) {
+  .ch-head.has-entry--rise .ch-entry.ch-entry--half img { --eh: min(56svh, calc(92vw / var(--ear))); }
+  /* 머리글에는 --eh 가 인라인으로 박혀 있어 덮을 수 없다 — 보이는 높이(--vis)를 바로 다시 잡는다 */
+  .chapter .ch-head.has-entry--half.has-entry--rise { --vis: calc(min(56svh, calc(92vw / var(--ear))) * var(--ev)); --yfs: clamp(110px, 33vw, 200px); padding-bottom: 0; }
+}
+
+/* 흰 바탕 제품 사진 (kind: blend) — 곱하기로 섞어 흰 바탕이 크림 바탕에 녹게. 상자에 크림을 깔아야 섞일 바탕이 생긴다 */
+.hx-box:has(.k-blend) { background: var(--cream); }
+.hx-it.k-blend { mix-blend-mode: multiply; }
+.hx-it.k-blend img { box-shadow: none; background: none; }
+
+/* ===== 위에서 내려오는 들머리 (entry.side = "ct", Tweed Deluxe) =====
+   물건이 화면 위 가운데에서 내려와 아래쪽 일부(--ev)만 보이고, 연도·제목은 그 아래에 선다. 스크롤하면 위로 빠르게 빠진다 */
+.chapter .ch-head.has-entry--half.has-entry--rise.has-entry--drop {
+  --tb: 13svh;
+  --yfs: clamp(140px, min(28vw, calc((100svh - var(--vis) - var(--tb) - 9svh) / .76)), 520px);
+}
+.ch-head.has-entry--drop .ch-entry.ch-entry--half img {
+  top: calc(var(--vis) - var(--eh, 95svh));
+  transform: translate3d(0, calc((1 - var(--p, 0)) * -1 * (var(--vis) + 10svh) - var(--lv, 0) * 100svh), 0);
+}
+
+/* ===== 오른쪽에서 밀려 들어오는 들머리 (entry.side = "rs", Tweed Deluxe) =====
+   상자 모양 물건이 화면 오른쪽 끝에 걸려 왼쪽 일부(--ev, 폭 비)만 보인다. 위에서 떨어지지 않고 옆에서 밀려 나온다.
+   제목은 물건 왼쪽 가장자리에서 틈(--tg)만큼 떨어진 선에 맞춘다 */
+.ch-head.has-entry--slide .ch-entry.ch-entry--half img {
+  left: calc(100vw - var(--eh) * var(--ear, 1) * var(--ev, .6)); top: calc((100svh - var(--eh)) / 2 - 2svh);
+  transform: translate3d(calc((1 - var(--p, 0)) * (var(--eh) * var(--ear, 1) * var(--ev, .6) + 8vw)), 0, 0);
+}
+@media (min-width: 901px) {
+  .chapter .ch-head.has-entry--half.has-entry--slide {
+    --tr: max(28vw, calc(var(--eh) * var(--ear, 1) * var(--ev, .6) + var(--tg, 3vw)));
+    --yfs: clamp(200px, min(38vw, calc((100vw - var(--tr) - var(--gutter)) / 2.2)), 600px);
+  }
+}
+@media (max-width: 900px) {
+  .ch-head.has-entry--slide .ch-entry.ch-entry--half img { --eh: min(42svh, calc(96vw / var(--ear, 1))); top: 12svh; }
+}
+/* ES-335 들머리 (side "c") — 왼쪽으로 눕힌 바디가 화면 아래에 걸려 고음 쪽 절반만 보인다. 넥의 잘린 끝은 화면 왼쪽 밖으로.
+   좁은 화면에서는 더 크게 키워 바디가 화면 폭을 채우게 */
+@media (max-width: 900px) {
+  #ch-es-335 .ch-head.has-entry--rise .ch-entry.ch-entry--half img { --eh: calc(160vw / var(--ear)); --ecx: 18vw; }
+  #ch-es-335 .ch-head.has-entry--half.has-entry--rise { --vis: calc(160vw / var(--ear) * var(--ev)); }
+}

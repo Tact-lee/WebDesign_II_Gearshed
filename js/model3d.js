@@ -147,6 +147,26 @@ function setup(st, model) {
   model.position.sub(c);
   pivot.add(model);
   pivot.updateMatrixWorld(true);
+  // 반투명(BLEND) 재질도 깊이를 쓴다 — 재질 하나로 된 모델(Les Paul)은 그러지 않으면 각도에 따라 바디가 노브·테일피스를 덮는다
+  model.traverse((o) => { if (o.isMesh) for (const m of [].concat(o.material)) if (m.transparent) m.depthWrite = true; });
+  // paint [{names, color, metal, rough, keepMap, opacity}] — 몇몇 부품에만 재질을 따로 준다.
+  // 웹용 바탕 텍스처(JPEG)에는 알파가 없어 Les Paul 탑햇 노브의 투명한 껍데기가 불투명한 회색이 된다 —
+  // 껍데기는 텍스처(숫자)를 남긴 채 비치게(opacity), 안의 인서트는 금속으로. 비치는 부품은 안쪽을 다 그린 뒤에 그린다
+  for (const p of st.cfg.paint || []) {
+    let m = null;
+    model.traverse((o) => {
+      if (!o.isMesh || !p.names.includes(o.name)) return;
+      if (!m) {
+        m = o.material.clone();
+        Object.assign(m, { aoMap: null, metalnessMap: null, roughnessMap: null, metalness: p.metal ?? 0, roughness: p.rough ?? 0.4 });
+        if (!p.keepMap) m.map = null;
+        if (p.opacity != null) Object.assign(m, { transparent: true, opacity: p.opacity, depthWrite: false });
+        m.color.set(p.color);
+      }
+      o.material = m;
+      if (p.opacity != null) o.renderOrder = 2;
+    });
+  }
 
   const ex = st.cfg.explode || {};
   const { parts, fades } = explodeParts(model, ex);
