@@ -5,14 +5,27 @@
    - 스크롤 연출은 rAF 한 개 + IntersectionObserver로만 돌린다
    ========================================================= */
 
-import { makeSil, shapeOf } from './silhouettes.js?v=202611031021';
-import { cutout } from './media.js?v=202611031021';
-import { m3Prepare, m3Near, m3Draw, m3Status } from './model3d.js?v=202611031021';
+import { makeSil, shapeOf } from './silhouettes.js?v=202611100813';
+import { cutout } from './media.js?v=202611100813';
+import { m3Prepare, m3Near, m3Draw, m3Status } from './model3d.js?v=202611100813';
 
 const $ = (s, r = document) => r.querySelector(s);
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+// 이미지 대체 텍스트 — assets.alts[파일명] > 캡션 > "브랜드 모델: 파일명 낱말"(읽을 수 있는 이름일 때만) > "브랜드 모델"
+const altFor = (ch, src, cap) => {
+  const pick = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? (v[document.documentElement.lang] ?? v.en ?? '') : (v ?? ''));
+  const name = `${ch.brand || ''} ${ch.model || ''}`.trim();
+  let s = pick((ch.assets && ch.assets.alts || {})[src]);
+  if (!s && cap) s = pick(Array.isArray(cap) ? cap[0] : cap);
+  if (!s) {
+    const words = String(src).split('/').pop().replace(/\.[a-z0-9]+$/i, '').split(/[-_ ]+/)
+      .filter((w) => /^[a-z]{3,}$/i.test(w) && !/^(cutout|cut|img|image|photo|web|final|copy|crop|new|alt)$/i.test(w));
+    s = words.length ? `${name}: ${words.join(' ')}` : name;
+  }
+  return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+};
 
 const KIND_LABEL = {
   '3d': '3D model', 'image': 'Photograph', 'image+diagram': 'Photo + diagram',
@@ -27,8 +40,8 @@ const KIND_LABEL = {
 const kindLabel = (k) => KIND_LABEL[k] || k || '—';
 
 /* ---------- 0. 입장 시퀀스 ----------
-   암전 → 2026 에서 1931 까지 한 해씩 거슬러 올라가는 연도판 →
-   1931 의 네 숫자가 자리 그대로 T·i·m·e 로 넘어가고,
+   암전 → 2026 에서 1932 까지 한 해씩 거슬러 올라가는 연도판 →
+   1932 의 네 숫자가 자리 그대로 T·i·m·e 로 넘어가고,
    l·i·n·e 가 그 뒤를 따라 오른쪽으로 하나씩 돌아 나온다. */
 const boot = $('#boot');
 const tLine = $('.intro-title .t-line');
@@ -36,12 +49,12 @@ const tLine = $('.intro-title .t-line');
 const BOOT = {
   word: 'Timeline',
   from: 2026,
-  to: 1931,
+  to: 1932,
   /* 연도판은 한 덩어리 애니메이션으로 굴린다. 끊기지 않게 칸마다 속도를
      이어서 깎아 내려가고, 끝으로 갈수록 머무는 시간이 붙어 연도가 읽힌다. */
   cStart: 78,            // 2026 에서 떨어지는 첫 칸 (ms)
   cFast: 13,             // 한창 훑고 지나갈 때 한 칸 (ms)
-  cSlow: 300,            // 마지막 1932 → 1931 한 칸 (ms)
+  cSlow: 300,            // 마지막 1933 → 1932 한 칸 (ms)
   accel: 9,              // 최고 속도까지 쓰는 칸 수
   decel: 14,             // 감속에 쓰는 칸 수
   holdMax: 0.42,         // 마지막 해가 멈춰 서 있는 비율
@@ -49,7 +62,7 @@ const BOOT = {
   moveEase: 'cubic-bezier(.42, .02, .46, 1)',    // 감속 구간 — 부드럽게 앉는다
   countLag: 0,           // 네 자리를 딱 맞물려 돌린다 — 없는 연도가 비치지 않게
   lead: 420,             // 2026 을 먼저 읽히고 나서 거슬러 올라간다
-  hold: 160,             // 1931 에서 숨 고르기
+  hold: 160,             // 1932 에서 숨 고르기
   morphMs: 620,          // 숫자가 걷히고 글자가 올라오는 시간
   morphLag: 60,          // T·i·m·e 사이 시차
   morphEase: 'cubic-bezier(.3, 1, .33, 1)',
@@ -291,11 +304,11 @@ document.querySelectorAll('.lang button[data-lang]').forEach((b) => {
 });
 if (new URLSearchParams(location.search).has('notes')) document.body.classList.add('show-notes');
 
-const data = await fetch(`data/timeline.${lang}.json?v=202611031021`).then((r) => r.json());
+const data = await fetch(`data/timeline.${lang}.json?v=202611100813`).then((r) => r.json());
 
 /* 작업 범위 — 지금은 이 챕터까지만 그린다. null 이면 전부 */
-const BUILD_UNTIL = 'les-paul-standard';
-const BUILD_SKIP = ['flying-v-explorer', 'jazzmaster', 'rickenbacker-325'];   // 순서상 앞이지만 아직 작업하지 않은 챕터
+const BUILD_UNTIL = 'twin-reverb';
+const BUILD_SKIP = ['firebird'];   // 순서상 앞이지만 아직 작업하지 않은 챕터
 data.chapters = data.chapters.filter((c) => !BUILD_SKIP.includes(c.id));
 if (BUILD_UNTIL) {
   const cut = data.chapters.findIndex((c) => c.id === BUILD_UNTIL);
@@ -604,7 +617,7 @@ function heroStage(sec, ch) {
   const idx = Object.fromEntries(ch.blocks.map((b, i) => [b.id, i]));
   const blk = (id) => ch.blocks[idx[id]];
   const full = st.full;
-  const panels = full ? [{ layout: 'full', block: full.block, side: full.side, fit: full.fit, ar: full.ar, steps: full.steps }, ...(st.panels || [])] : (st.panels || []);
+  const panels = full ? [{ layout: 'full', block: full.block, blocks: full.blocks, side: full.side, fit: full.fit, ar: full.ar, steps: full.steps }, ...(st.panels || [])] : (st.panels || []);
   const N = panels.length;
   const W = panels.map((p) => p.span || 1);                  // 칸 길이 — 기본 1, 가로 갤러리처럼 오래 머무는 칸은 더 길다
   const B = W.map((_, k) => W.slice(0, k).reduce((a, b) => a + b, 0));
@@ -616,7 +629,7 @@ function heroStage(sec, ch) {
     }
     const cls = p.layout === 'sheets' ? 'hx-sheets' : `hx-${p.layout}`;
     return `<figure class="hx-media ${cls}">${(p.images || []).map((s) =>
-      `<img src="${dir + s}" alt="" decoding="async" loading="lazy">`).join('')}</figure>`;
+      `<img src="${dir + s}" alt="${altFor(ch, s)}" decoding="async" loading="lazy">`).join('')}</figure>`;
   };
 // 언어별 문자열 — 문자열이면 그대로, {en, ko, ja} 면 지금 언어
 const tr = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? (v[lang] ?? v.en ?? '') : (v ?? ''));
@@ -639,7 +652,7 @@ const spreadHTML = (p, k, i) => {
   const pc = (v) => (v == null ? null : `${v}%`);
   const items = b.items.map((it, n) => `<figure class="hx-it k-${it.kind || 'print'}${it.cc ? ' cap-c' : ''}" style="${vars({
     x: pc(it.x), y: pc(it.y), w: pc(it.w), iar: it.ar, rot: it.r || 0, n, mx: pc(it.mx), my: pc(it.my), mw: pc(it.mw) })}">${capHTML(it.cap)}`
-    + `<img src="${dir + it.src}" alt="" decoding="async" loading="lazy"></figure>`).join('');
+    + `<img src="${dir + it.src}" alt="${altFor(ch, it.src, it.cap)}" decoding="async" loading="lazy"></figure>`).join('');
   const notes = (b.notes || []).map((c, n) => `<div class="hx-note hx-note--${c.side}" style="${vars({ bx: pc(c.x), by: pc(c.y), n })}">`
     + `<span>${esc(tr(c.t))}</span><i></i><b></b></div>`).join('');
   const d = b.dim;
@@ -649,12 +662,12 @@ const spreadHTML = (p, k, i) => {
     p.kicker ? `<p class="hx-kicker">${esc(tr(p.kicker))}</p>` : '',
     stepsHTML(p.steps, p.stepsBig),
     p.pull ? pullHTML(blk(p.block).b) : '',
-    p.inset ? `<figure class="hx-inset">${capHTML(p.inset.cap)}<img src="${dir + p.inset.src}" alt="" decoding="async" loading="lazy" style="aspect-ratio:${p.inset.ar}"></figure>` : '',
+    p.inset ? `<figure class="hx-inset">${capHTML(p.inset.cap)}<img src="${dir + p.inset.src}" alt="${altFor(ch, p.inset.src, p.inset.cap)}" decoding="async" loading="lazy" style="aspect-ratio:${p.inset.ar}"></figure>` : '',
   ].join('');
   const cls = `hx-panel hx-spread${p.tone === 'dark' ? ' hx-dark' : ''}${p.side === 'r' ? ' side-r' : ''}${p.big ? ' hx-bigtext' : ''}`;
   return `<section class="${cls}" data-k="${k}" data-enter="${p.enter || 'slide'}" style="${vars({ fw: p.fw, tw: p.tw, mfh: p.mfh })}">`
     + `<div class="hx-fig"><div class="hx-box${b.items.length > 1 ? ' is-multi' : ''}" style="${vars({ ar: b.ar, mar: b.mar, lw: b.lw })}">${items}${notes}${dim}</div></div>`
-    + `<div class="hx-text"><div class="hx-tin">${extra}${blockHTML(blk(p.block), i, false)}</div></div></section>`;
+    + `<div class="hx-text"><div class="hx-tin">${extra}${(p.blocks || [p.block]).map(id => blockHTML(blk(id), idx[id], false)).join('')}</div></div></section>`;
 };
   const panelHTML = (p, k) => {
     const i = idx[p.block];
@@ -662,7 +675,7 @@ if (p.layout === 'spread') return spreadHTML(p, k, i);
 if (p.layout === 'photohalf') {
   // 왼쪽 반을 사진으로 꽉 채우고 글은 오른쪽. 사진 판은 왼쪽으로 더 뻗어 있어 찢긴 세로 경계가 들어와도 판의 곧은 모서리가 드러나지 않는다
   return `<section class="hx-panel hx-photohalf${p.side === 'r' ? ' side-r' : ''}${p.tone === 'dark' ? ' hx-dark' : ''}${p.fit ? ' hx-phfit' : ''}" data-k="${k}" data-enter="${p.enter || 'slide'}">`
-    + `<div class="hx-ph"><img src="${dir + p.image}" alt="" decoding="async" loading="lazy"${p.pos ? ` style="object-position:${p.pos}"` : ''}></div>`   // pos: 잘라 낼 때 남길 쪽(object-position)
+    + `<div class="hx-ph"><img src="${dir + p.image}" alt="${altFor(ch, p.image)}" decoding="async" loading="lazy"${p.pos ? ` style="object-position:${p.pos}"` : ''}></div>`   // pos: 잘라 낼 때 남길 쪽(object-position)
     + `<div class="hx-text">${(p.blocks || [p.block]).map((id) => blockHTML(blk(id), idx[id], false)).join('')}</div>`
     + (p.audio ? `<div class="hx-aud" data-yt="${p.audio.youtube}" data-start="${p.audio.start || 0}" aria-hidden="true"><div class="hx-vwrap"></div></div>` : '')   // 소리만 — 보이지 않는 플레이어
     + '</section>';
@@ -674,7 +687,7 @@ if (p.layout === 'gallery') {
   const dropFirst = (q, n) => { let r = q; for (let j = 0; j < n; j++) { const mm = r.match(/^(.+?(?:。|\.(?=\s|$)))\s*([\s\S]*)$/); if (!mm) break; r = mm[2]; } return r; };
   const chunks = (p.texts || ps.map((_, j) => ({ p: j }))).map((c) => dropFirst(ps[c.p] || '', c.drop || 0));
   const items = p.items.map((it) => (it.src
-    ? `<figure class="gl-it gl-img${it.b != null ? ' gl-b' : ''}${it.cut ? ' gl-cut' : ''}" style="--x:${it.x}svh;--y:${it.y ?? 0}svh;--b:${it.b ?? 0}svh;--h:${it.h}svh;--ar:${it.ar}"><img src="${dir + it.src}" alt="" decoding="async" loading="lazy"></figure>`
+    ? `<figure class="gl-it gl-img${it.b != null ? ' gl-b' : ''}${it.cut ? ' gl-cut' : ''}" style="--x:${it.x}svh;--y:${it.y ?? 0}svh;--b:${it.b ?? 0}svh;--h:${it.h}svh;--ar:${it.ar}"><img src="${dir + it.src}" alt="${altFor(ch, it.src, it.cap)}" decoding="async" loading="lazy"></figure>`
     : `<div class="gl-it gl-txt${it.big ? ' gl-big' : ''}${it.b != null ? ' gl-b' : ''}" style="--x:${it.x}svh;--y:${it.y ?? 0}svh;--b:${it.b ?? 0}svh;--w:${it.w}svh"><article class="block" data-i="${i}">${para(chunks[it.t] || '')}</article></div>`)).join('');
   // pass: 옆으로 누운 기타가 화면 가운데를 가로질러 지나가고, 지나간 자리에 조각들이 차례로 생긴다
   const pass = p.pass ? `<img class="gl-pass" src="${dir + p.pass}" alt="" decoding="async">` : '';
@@ -683,7 +696,7 @@ if (p.layout === 'gallery') {
 if (p.layout === 'riseimg') {
   // 패널이 밀려 들어온 뒤 누끼가 아래에서 솟아 왼쪽 반을 채운다. 글은 오른쪽
   return `<section class="hx-panel hx-riseimg" data-k="${k}" data-enter="${p.enter || 'slide'}" style="--lh:${p.h || '115svh'};--lt:${p.top || '-22svh'}${p.ar ? `;--la:${p.ar}` : ''}">`
-    + `<img class="hx-rise${p.anchor === 'edge' ? ' hx-rise--edge' : ''}${p.from === 'top' ? ' hx-rise--top' : ''}${p.ar ? ' hx-rise--ar' : ''}" src="${dir + p.image}" alt="" decoding="async" loading="lazy">`
+    + `<img class="hx-rise${p.anchor === 'edge' ? ' hx-rise--edge' : ''}${p.from === 'top' ? ' hx-rise--top' : ''}${p.ar ? ' hx-rise--ar' : ''}" src="${dir + p.image}" alt="${altFor(ch, p.image)}" decoding="async" loading="lazy">`
     + `<div class="hx-text">${blockHTML(blk(p.block), i, false)}</div></section>`;
 }
 if (p.layout === 'collage') {
@@ -692,8 +705,8 @@ if (p.layout === 'collage') {
   const thenStyle = [th.h && `--th:${th.h}`, th.top && `--tt:${th.top}`, th.w && `--tw:${th.w}`].filter(Boolean).join(';');
   const items = (p.items || []).map((it, n) =>
     `<figure class="hx-item" style="--x:${it.x};--y:${it.y};--h:${it.h};--r:${it.r || 0};--n:${n}">`
-    + `${it.cap ? `<figcaption>${esc(it.cap)}</figcaption>` : ''}<img src="${dir + it.src}" alt="" decoding="async" loading="lazy"></figure>`).join('');
-  const then = p.then ? `<img class="hx-then" src="${dir + p.then.image}" alt="" decoding="async" loading="lazy"${thenStyle ? ` style="${thenStyle}"` : ''}>` : '';
+    + `${it.cap ? `<figcaption>${esc(it.cap)}</figcaption>` : ''}<img src="${dir + it.src}" alt="${altFor(ch, it.src, it.cap)}" decoding="async" loading="lazy"></figure>`).join('');
+  const then = p.then ? `<img class="hx-then" src="${dir + p.then.image}" alt="${altFor(ch, p.then.image)}" decoding="async" loading="lazy"${thenStyle ? ` style="${thenStyle}"` : ''}>` : '';
   const tx = p.text || {};
   return `<section class="hx-panel hx-collage" data-k="${k}" data-enter="${p.enter || 'slide'}"${p.then ? ' data-then="1"' : ''}>${items}${then}`
     + `<div class="hx-text" style="--tx:${tx.x || '60vw'};--ty:${tx.y || '17svh'};--tw:${tx.w || '32vw'}">${blockHTML(blk(p.block), i, false)}</div></section>`;
@@ -702,21 +715,26 @@ if (p.layout === 'videofull') {
       return `<section class="hx-panel hx-vfull${p.fit === 'top' ? ' hx-vfull--top' : ''}" data-k="${k}" data-enter="${p.enter || 'slide'}" data-yt="${p.youtube}"${p.start ? ` data-start="${p.start}"` : ''}>`
         + '<div class="hx-vwrap"></div><div class="hx-vclick" role="button" aria-label="Play / pause"></div><i class="hx-vpause" aria-hidden="true"></i></section>';
     }
+    if (p.layout === 'essay') {
+      return `<section class="hx-panel hx-essay${p.side === 'r' ? ' side-r' : ''}" data-k="${k}" data-enter="${p.enter || 'slide'}">`
+        + `<div class="hx-essay-mark" aria-hidden="true"><span>${esc(p.label || '')}</span><strong>${esc(p.mark || '')}</strong></div>`
+        + `<div class="hx-text">${blockHTML(blk(p.block), i, false)}</div></section>`;
+    }
     if (p.layout === 'fullphoto') {
       return `<section class="hx-panel hx-full hx-fullphoto" data-k="${k}" data-enter="${p.enter || 'slide'}">`
-        + `<img class="hx-fullimg" src="${dir + p.images[0]}" alt="" decoding="async" loading="lazy"><div class="hx-dim"></div>`
-        + `<div class="hx-text">${blockHTML(blk(p.block), i, false)}</div></section>`;
+        + `<img class="hx-fullimg" src="${dir + p.images[0]}" alt="${altFor(ch, p.images[0])}" decoding="async" loading="lazy"><div class="hx-dim"></div>`
+        + `<div class="hx-text">${(p.blocks || [p.block]).map((id) => blockHTML(blk(id), idx[id], false)).join('')}</div></section>`;
     }
     if (p.layout === 'full') {
       if (p.fit) {
         return `<section class="hx-panel hx-full hx-full--fit${p.side === 'r' ? ' hx-full--r' : ''}" data-k="${k}" style="--ar:${p.ar}">`
-          + `<div class="hx-text"><div class="hx-tin">${stepsHTML(p.steps)}${blockHTML(blk(p.block), i, false)}</div></div></section>`;
+          + `<div class="hx-text"><div class="hx-tin">${stepsHTML(p.steps)}${(p.blocks || [p.block]).map(id => blockHTML(blk(id), idx[id], false)).join('')}</div></div></section>`;
       }
       return `<section class="hx-panel hx-full${p.side === 'r' ? ' hx-full--r' : ''}" data-k="${k}"><div class="hx-text">${blockHTML(blk(p.block), i, false)}</div></section>`;
     }
     const th = p.then || {};
     const thenStyle = [th.h && `--th:${th.h}`, th.top && `--tt:${th.top}`, th.w && `--tw:${th.w}`].filter(Boolean).join(';');
-    const then = p.then ? `<img class="hx-then" src="${dir + p.then.image}" alt="" decoding="async" loading="lazy"${thenStyle ? ` style="${thenStyle}"` : ''}>` : '';
+    const then = p.then ? `<img class="hx-then" src="${dir + p.then.image}" alt="${altFor(ch, p.then.image)}" decoding="async" loading="lazy"${thenStyle ? ` style="${thenStyle}"` : ''}>` : '';
     return `<section class="hx-panel hx-${p.layout}${p.side === 'r' ? ' side-r' : ''}${p.bleed ? ' hx-bleed' : ''}${p.diag ? ' hx-diag' : ''}" data-k="${k}" data-enter="${p.enter || 'slide'}"${p.then ? ' data-then="1"' : ''}>${media(p)}${then}`
       + `<div class="hx-text">${blockHTML(blk(p.block), i, false)}</div></section>`;
   };
@@ -765,7 +783,7 @@ if (p.layout === 'videofull') {
       if (full.side !== 'r') F.classList.add('stage-full--photo-r');   // 글이 왼쪽이면 사진은 오른쪽
       F.style.setProperty('--ar', full.ar);
     }
-    F.innerHTML = `<img class="stage-full-img" alt="" decoding="async" src="${dir + full.src}">`
+    F.innerHTML = `<img class="stage-full-img" alt="${altFor(ch, full.src, full.cap)}" decoding="async" src="${dir + full.src}">`
       + (full.fit ? capHTML(full.cap, ' stage-full-cap') : '')
       + '<div class="stage-full-dim"></div><canvas class="stage-tear"></canvas>';
     box.appendChild(F);
@@ -787,7 +805,8 @@ if (p.layout === 'videofull') {
     if (!st[k]) return;
     const im = new Image();
     im.className = `stage-img ${cls}`;
-    im.alt = '';
+    // 누끼(png)는 제목이 이미 말해 주는 장식, 사진(jpg)은 본문 사진이라 설명을 단다
+    im.alt = /\.png$/i.test(st[k]) ? '' : altFor(ch, st[k]).replace(/&quot;/g, '"').replace(/&amp;/g, '&');
     im.decoding = 'async';
     im.src = dir + st[k];
     if (st.sizes && st.sizes[k]) im.style.setProperty('--sh', st.sizes[k]);
@@ -832,11 +851,13 @@ function head(ch) {
   const rise = half && (a.entry.side === 'c' || a.entry.side === 'ct');   // ct — 위 가운데에서 내려와 아래쪽 일부만 보이고, 제목은 그 아래에
   const drop = half && a.entry.side === 'ct';
   const slide = half && a.entry.side === 'rs';   // rs — 상자 모양 물건이 오른쪽 끝에서 옆으로 밀려 들어와 일부만 보인다(Deluxe). ev: 보이는 폭 비
+  const prev = data.chapters[data.chapters.indexOf(ch) - 1];
+  const same = half && prev && prev.year === ch.year;   // 앞 챕터와 연도가 같다 — 굴릴 연도가 없으니 화면을 채우는 연도 없이 바로 물건이 들어온다
   const ev = half ? Object.entries({ eh: a.entry.h, ecx: a.entry.cx, et: a.entry.top, tg: a.entry.tg, yx: a.entry.yx, yy: a.entry.yy, ear: a.entry.ar, ev: a.entry.ev })
     .filter(([, x]) => x != null && x !== '').map(([k, x]) => `;--${k}:${x}`).join('') : '';
   return `
     ${entry ? '' : `<div class="ch-bgyear" aria-hidden="true">${ch.year}</div>`}
-    <header class="ch-head${entry ? ' has-entry' : ''}${half ? ' has-entry--half' : ''}${darkIn ? ' has-entry--darkin' : ''}${half && a.entry.side === 'l' ? ' has-entry--left' : ''}${rise ? ' has-entry--rise' : ''}${drop ? ' has-entry--drop' : ''}${slide ? ' has-entry--slide' : ''}"${entry ? ` style="--p:0${ev}"` : ''}>${half ? '<div class="ch-dark" aria-hidden="true" hidden></div><canvas class="ch-tear" aria-hidden="true" hidden></canvas>' : ''}${entry}
+    <header class="ch-head${entry ? ' has-entry' : ''}${half ? ' has-entry--half' : ''}${darkIn ? ' has-entry--darkin' : ''}${half && a.entry.side === 'l' ? ' has-entry--left' : ''}${rise ? ' has-entry--rise' : ''}${drop ? ' has-entry--drop' : ''}${slide ? ' has-entry--slide' : ''}${same ? ' has-entry--same' : ''}"${entry ? ` style="--p:0${ev}"` : ''}>${half ? '<div class="ch-dark" aria-hidden="true" hidden></div><canvas class="ch-tear" aria-hidden="true" hidden></canvas>' : ''}${entry}
       <div class="ch-title">
         ${entry ? `<div class="ch-bgyear ch-bgyear--in" aria-hidden="true">${half ? yearReel(ch) : ch.year}</div>` : ''}
         <h2><span class="ch-brand">${esc(ch.brand)}</span> ${esc(ch.model)}${ch.nickname ? `<span class="ch-nick">“${esc(ch.nickname)}”</span>` : ''}</h2>
@@ -940,7 +961,7 @@ model3d(sec, ch) {
     return `<div class="m3-t side-${s.side || 'l'}${s.textY === 'b' ? ' pos-b' : ''}" data-k="${k}"><div class="m3-tin">${blockHTML(body, i, false)}</div></div>`;
   }).join('');
   const imgs = shots.map((s, k) => (s.image
-    ? `<figure class="m3-img side-${s.side === 'r' ? 'l' : 'r'}${s.fit ? ' is-fit' : ''}" data-k="${k}"><img src="${a.dir.replace(/\/$/, '')}/${s.image}" alt="" decoding="async" loading="lazy"></figure>` : '')).join('');   // fit: 문서·인쇄물은 자르지 않고 온전히
+    ? `<figure class="m3-img side-${s.side === 'r' ? 'l' : 'r'}${s.fit ? ' is-fit' : ''}" data-k="${k}"><img src="${a.dir.replace(/\/$/, '')}/${s.image}" alt="${altFor(ch, s.image)}" decoding="async" loading="lazy"${s.pos ? ` style="object-position:${s.pos}"` : ''}></figure>` : '')).join('');   // fit: 문서·인쇄물은 자르지 않고 온전히
   // 전면 영상 칸 — ES-150 영상과 같은 방식(UI 없음, 시작 지점, 자막 끔, 소리는 서서히)
   const vids = shots.map((s, k) => (s.video
     ? `<section class="m3-video hx-vfull" data-k="${k}" data-yt="${s.video.youtube}" data-start="${s.video.start || 0}">`
@@ -969,7 +990,7 @@ model3d(sec, ch) {
       </div>
       ${snaps}
     </div>`;
-  sec._m3 = { shots, W, B };
+  sec._m3 = { shots, W, B, solo: !!M.soloImages };   // soloImages: 사진이 있는 칸에서는 모델을 치우고 사진과 글만 남긴다
   sec.querySelectorAll('.m3-video').forEach((pn) => {
     $('.hx-vclick', pn).addEventListener('click', () => {
       const v = pn._v;
@@ -1073,7 +1094,7 @@ data.chapters.forEach((ch) => {
 
   lastCh = ch;
   const li = document.createElement('li');
-  li.innerHTML = `<button type="button" data-target="ch-${ch.id}"><span class="nm">${esc(ch.model)}</span><span class="yr">${ch.year}</span></button>`;
+  li.innerHTML = `<button type="button" data-target="ch-${ch.id}"><span class="nm"><span class="br">${esc(ch.brand)}</span> ${esc(ch.model)}</span><span class="yr">${ch.year}</span></button>`;
   railList.appendChild(li);
 });
 
@@ -1092,24 +1113,48 @@ document.body.classList.remove('is-loading');
 $('[data-stat="chapters"]').textContent = data.stats.chapters;
 $('[data-stat="years"]').textContent = `${data.stats.years[0]}–${data.stats.years[1]}`;
 
-railList.addEventListener('click', (e) => {
-  const b = e.target.closest('button');
-  const sec = b && document.getElementById(b.dataset.target);
+// 출처 — 사이트 맨 끝에 챕터 순서대로 전부 모은다
+$('.sources-list').innerHTML = data.chapters.map((ch) => `<section class="src-ch"><h3>${esc(ch.brand)} ${esc(ch.model)} <span>${ch.year}</span></h3><ul>${
+  (ch.sourceList || []).map((s) => `<li>${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)}</a>` : esc(s.label)}</li>`).join('')}</ul></section>`).join('');
+// 긴 목록이 투명한 상단바 밑을 지나가며 글자가 겹치지 않게, 목록이 화면 위에 닿으면 상단바에 바탕을 깐다
+new IntersectionObserver(([e]) => document.body.classList.toggle('in-sources', e.isIntersecting), { rootMargin: '0px 0px -100% 0px' }).observe($('#sources'));
+
+// 챕터로 곧장 옮겨 간다 — 레일 클릭이 쓴다
+function goChapter(sec) {
   if (!sec) return;
   // 지나가는 챕터의 들머리는 건너뛴다 — 굴러가지 않고 곧장 옮겨 가서, 도착한 챕터의 들머리만 처음부터 보인다
   const hd = sec.querySelector('.ch-head');
-  if (hd) { hd._ts = 0; hd._pv = null; hd.dataset.yv = '0'; }
+  if (hd) { hd._ts = 0; hd._seen = false; hd._pv = null; hd.dataset.yv = '0'; }
   if (sec._m3) sec._m3.ts = 0;
   unlockScroll();
   scrollTo({ top: Math.round(sec.getBoundingClientRect().top + scrollY), behavior: 'instant' });
+}
+railList.addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  goChapter(b && document.getElementById(b.dataset.target));
+});
+// 레일 안에서는 위/아래 화살표로 항목 사이를 옮겨 다닌다
+railList.addEventListener('keydown', (e) => {
+  const d = { ArrowDown: 1, ArrowUp: -1 }[e.key];
+  const b = e.target.closest('button');
+  if (!d || !b) return;
+  const all = [...railList.querySelectorAll('button')];
+  const nx = all[all.indexOf(b) + d];
+  if (nx) { e.preventDefault(); nx.focus(); }
 });
 
-/* 들머리 연출 동안 스크롤 잠금 — 연도 릴이 돌고 기타·제목이 나오는 사이에는 입력을 받지 않고 그 자리에 세워 둔다.
-   잠그는 자리는 그 머리글(3D 챕터는 무대)이 화면 윗변에 닿는 스크롤 위치. 모델을 받느라 오래 걸리면 6초 뒤에 푼다 */
+/* 들머리 연출 동안 스크롤 잠금 — 연도 릴이 돌고 기타·제목이 나오는 사이에는 그 자리에 세워 둔다.
+   잠그는 자리는 그 머리글이 화면 윗변에 닿는 스크롤 위치. 잠긴 동안의 입력은 버리지 않는다: 내리면 연출을 앞당기고, 올리면 놓아 준다 */
 const LOCK_MAX = 6000;
+const LOCK_RUSH = 6;          // 화면 높이만큼 내리는 입력이 앞당기는 연출 시간(초)
 let lockWant = null;          // 이번 프레임에 잠가 둘 스크롤 위치 (없으면 null)
 let lockOn = false, lockStart = 0, lockSpent = false, lockY = 0;
+let lockRush = 0;             // 다음 프레임에 앞당길 연출 시간(초)
 function unlockScroll() { lockOn = false; lockSpent = false; document.documentElement.classList.remove('scroll-lock'); }
+function lockInput(dy) {
+  if (dy > 0) { lockRush += (dy / innerHeight) * LOCK_RUSH; return; }
+  if (dy < 0) { lockOn = false; lockSpent = true; document.documentElement.classList.remove('scroll-lock'); }
+}
 function updateLock(now) {
   if (lockWant != null && !lockOn && !lockSpent) { lockOn = true; lockStart = now; document.documentElement.classList.add('scroll-lock'); }
   if (lockOn) {
@@ -1120,7 +1165,23 @@ function updateLock(now) {
   }
   if (lockWant == null) lockSpent = false;
 }
-addEventListener('touchmove', (e) => { if (lockOn) e.preventDefault(); }, { passive: false });
+let lockTouchY = 0;
+addEventListener('touchstart', (e) => { lockTouchY = e.touches[0].clientY; }, { passive: true });
+addEventListener('touchmove', (e) => {
+  const y = e.touches[0].clientY;
+  const dy = lockTouchY - y;
+  lockTouchY = y;
+  if (!lockOn) return;
+  if (dy >= 0) e.preventDefault();
+  lockInput(dy);
+}, { passive: false });
+addEventListener('keydown', (e) => {
+  if (!lockOn || e.target.closest('a, button')) return;
+  const d = { ' ': 1, PageDown: 1, ArrowDown: 1, PageUp: -1, ArrowUp: -1 }[e.key];
+  if (!d) return;
+  if (d > 0) e.preventDefault();
+  lockInput(d * innerHeight * 0.5);
+});
 
 /* ---------- 3. 스크롤 엔진 ---------- */
 const chapters = [...document.querySelectorAll('.chapter')];
@@ -1128,6 +1189,86 @@ const seams = [...document.querySelectorAll('.seam')];
 const eras = [...document.querySelectorAll('.era')];
 const railItems = [...railList.children];
 const bar = $('#progress span');
+// 레일 오른쪽의 세로 진행선 — 하단 진행 막대를 대신한다(레일이 숨는 좁은 화면에서는 하단 막대를 그대로 쓴다)
+const railTrack = document.createElement('div');
+railTrack.className = 'rail-track';
+railTrack.innerHTML = '<b class="seg"></b><i></i>';
+railTrack.id = 'railTrack';
+railTrack.className = 'rail-track';
+document.body.appendChild(railTrack);
+document.body.appendChild(Object.assign(document.createElement('div'), { className: 'rail-veil' }));
+const railFill = railTrack.querySelector('i');
+// 진행선 끝을 따라 움직이는 지금 연도 — 진행선의 difference 혼합에 묶이지 않게 따로 둔다
+const railNow = document.body.appendChild(Object.assign(document.createElement('div'), { className: 'rail-now' }));
+railNow.setAttribute('aria-hidden', 'true');
+// 평소에는 화면 오른쪽 끝에 위아래로 길게 붙어 있다가, 레일을 펼치면 목록 옆으로 옮겨 와 항목 높이에 맞춘다
+const railEl = $('#rail');
+const railBox = () => {
+  const r = railList.getBoundingClientRect();
+  railTrack.style.setProperty('--rt', `${r.top.toFixed(1)}px`);
+  railTrack.style.setProperty('--rh', `${r.height.toFixed(1)}px`);
+  railTrack.style.setProperty("--rr", `${(document.documentElement.clientWidth - r.right - 13).toFixed(1)}px`);
+};
+new ResizeObserver(railBox).observe(railList);
+railBox();
+addEventListener('resize', railBox);
+// 펼침 확대 — 커서(키보드 포커스)에 가까운 항목일수록 크게, 이웃도 거리에 따라 함께 커진다.
+// 크기는 transform만 바꾸고, 커진 만큼 위아래 항목을 밀어내 겹치지 않게 한다(레이아웃은 그대로라 기준 위치가 흔들리지 않는다)
+const FE_A = 1.6, FE_SIG = 1.5;
+const railBtns = railItems.map(li => li.firstElementChild);
+const fisheye = (my) => {
+  if (my == null) { railBtns.forEach(b => { b.style.removeProperty('--s'); b.style.removeProperty('--dy'); b.style.removeProperty('--o'); b.classList.remove('is-near'); }); return; }
+  const top = railList.getBoundingClientRect().top;
+  const base = railItems.map(li => ({ c: top + li.offsetTop + li.offsetHeight / 2, h: li.offsetHeight }));
+  const n = base.length; if (!n) return;
+  const unit = n > 1 ? (base[n - 1].c - base[0].c) / (n - 1) : 20;
+  const sc = base.map(b => 1 + FE_A * Math.exp(-(((b.c - my) / unit) ** 2) / (2 * FE_SIG * FE_SIG)));
+  const nc = [base[0].c];
+  for (let k = 1; k < n; k++) {
+    const gap = base[k].c - base[k - 1].c - (base[k - 1].h + base[k].h) / 2;
+    // 원래 간격이 넉넉하면 그대로 두고, 커진 글자가 겹칠 때만 밀어낸다
+    nc.push(nc[k - 1] + Math.max(base[k].c - base[k - 1].c, base[k - 1].h * sc[k - 1] / 2 + Math.max(4, gap) + base[k].h * sc[k] / 2));
+  }
+  // 커서 아래 지점은 제자리에 둔다
+  let m2;
+  if (my <= base[0].c) m2 = nc[0] - (base[0].c - my);
+  else if (my >= base[n - 1].c) m2 = nc[n - 1] + (my - base[n - 1].c);
+  else { let k = 0; while (base[k + 1].c < my) k++; const t = (my - base[k].c) / (base[k + 1].c - base[k].c); m2 = nc[k] + (nc[k + 1] - nc[k]) * t; }
+  const sh = my - m2;
+  let near = 0; sc.forEach((v, k) => { if (v > sc[near]) near = k; });
+  railBtns.forEach((b, k) => {
+    b.style.setProperty('--s', sc[k].toFixed(3));
+    b.style.setProperty('--dy', `${(nc[k] + sh - base[k].c).toFixed(1)}px`);
+    b.style.setProperty('--o', (.3 + .7 * (sc[k] - 1) / FE_A).toFixed(2));
+    b.classList.toggle('is-near', k === near && sc[k] > 1 + FE_A * .6);
+  });
+};
+let railIsOpen = false;
+const railOpen = (on) => { if (on === railIsOpen) return; railIsOpen = on; if (on) railBox(); else fisheye(null); document.body.classList.toggle('rail-open', on); };
+// 펼침은 마우스 위치로만 정한다 — 화면 오른쪽 레일 띠 안에 커서가 있을 때만 열리고, 벗어나면 바로 닫힌다.
+// (mouseenter/leave와 :focus-within에 기대면 클릭 뒤 포커스가 남아 닫히지 않거나, 겹친 요소 때문에 열리지 않았다)
+const railZone = () => {
+  const r = railEl.getBoundingClientRect();
+  // 펼친 동안에는 커진 글자(transform 포함)까지 영역에 넣는다
+  const l = railIsOpen ? Math.min(r.left, ...railBtns.map(b => b.getBoundingClientRect().left)) - 24 : r.left;
+  return { l, t: r.top, b: r.bottom };
+};
+addEventListener('pointermove', (e) => {
+  if (e.pointerType === 'touch' || !document.body.classList.contains('past-intro')) { railOpen(false); return; }
+  const z = railZone();
+  const inside = e.clientX >= z.l && e.clientY >= z.t && e.clientY <= z.b;
+  railOpen(inside);
+  if (inside) fisheye(e.clientY);
+}, { passive: true });
+document.documentElement.addEventListener('pointerleave', () => railOpen(false));
+addEventListener('blur', () => railOpen(false));
+// 키보드로 들어왔을 때만 포커스로 연다. 마우스 클릭 뒤 남은 포커스는 펼침을 붙잡지 않는다
+railEl.addEventListener('focusin', (e) => {
+  if (!e.target.matches(':focus-visible')) return;
+  railOpen(true);
+  const li = e.target.closest('li'); if (li) fisheye(railList.getBoundingClientRect().top + li.offsetTop + li.offsetHeight / 2);
+});
+railEl.addEventListener('focusout', () => setTimeout(() => { if (!railEl.querySelector(':focus-visible')) railOpen(false); }, 0));
 const nowYear = $('#nowyear');
 
 const live = new Set();
@@ -1336,6 +1477,11 @@ panels.forEach((pn, k) => {
     const e = clamp((t - 0.1) / 0.75);                                 // 패널 안 이미지의 대각선 입장 진행도
     pn.style.setProperty('--e', (k === seg + 1 ? e * e * (3 - 2 * e) : k > seg + 1 ? 0 : 1).toFixed(4));
   }
+  // Without a full-photo opening, defer the first editorial panel until the hero copy exits.
+  if (k === 0 && !L.querySelector('.stage-full')) {
+    op *= easeIO(clamp((s - h * 0.75) / (h * 0.25)));
+    if (op <= 0.001) on = false;
+  }
   pn.style.visibility = on ? 'visible' : 'hidden';
   pn.style.zIndex = z;
   pn.style.clipPath = clip;
@@ -1457,7 +1603,7 @@ if (pn.classList.contains('hx-gallery') && vis) {
   }
   if (N > 0) {
   const fr = clamp((s - h * 0.55) / (h * 0.4)).toFixed(3);
-  el.querySelector('.hx-full .block').style.setProperty('--r', fr);
+  el.querySelector('.hx-full .block')?.style.setProperty('--r', fr);
   el.querySelector('.hx-full .hx-text')?.style.setProperty('--r', fr);
   }
 
@@ -1499,10 +1645,11 @@ function m3Frame(el, h) {
   g.pt = now;
   // 들머리 — 핀이 거의 도착하면(위 12%) 시간이 흐르고, 벗어나면 되감긴다
   const inPlace = REDUCED || wr.top <= h * 0.12;
-  g.ts = REDUCED ? 3.6 : clamp((g.ts || 0) + (inPlace ? dt : -dt * 2.2), 0, 3.6);
-  if (!REDUCED && g.ts < 3.6 && wr.top <= h * 0.12 && wr.top > -h * 0.15) lockWant = scrollY + wr.top;   // 연출 중 — 무대 첫 자리에 세워 둔다
+  const was = g.ts || 0;
+  g.ts = REDUCED ? 3.6 : clamp(was + (inPlace ? dt : -dt * 2.2), 0, 3.6);
   const stt = m3Status(el);
   if (stt && (stt.status === 'loading' || stt.status === 'idle')) g.ts = Math.min(g.ts, 1.7);   // 모델이 준비될 때까지 1951에서 기다린다
+  if (-wr.top > h * 0.02) g.ts = 3.6; // Scroll takes priority over the title reveal.
   const ts = g.ts;
   const rp = 1 - Math.pow(1 - clamp((ts - 0.25) / 1.4), 3);     // 1949 → 1951, 빠르게 돌다 천천히 선다
   const fd = easeIO(clamp((ts - 1.75) / 0.6));                    // 연도가 제자리로 줄어든다
@@ -1583,6 +1730,7 @@ function m3Frame(el, h) {
   });
 
   // 글이 놓이는 쪽을 어둡게 — 기타가 화면을 채우는 근접 장면에서도 글이 읽히게
+  pin.style.setProperty('--reading', Math.max(side.l, side.r).toFixed(3));
   pin.style.setProperty('--sl', side.l.toFixed(3));
   pin.style.setProperty('--sr', side.r.toFixed(3));
 
@@ -1597,13 +1745,13 @@ function m3Frame(el, h) {
 
   // 장면 — 핀이 화면에 걸쳐 있을 때만, 영상이 화면을 다 덮은 동안은 쉰다
   if (wr.top < h && wr.bottom > 0 && vv < 0.999) {
-    const P = m3Draw(el, { x, lp, rv: REDUCED ? 1 : rv, fade, now });
+    const P = m3Draw(el, { x, lp, progress: u, rv: REDUCED ? 1 : rv, fade, now });
     if (P) {
       pin.style.setProperty('--gx', P.sx.toFixed(3));
       pin.style.setProperty('--gy', P.sy.toFixed(3));
     }
-    pin.style.setProperty('--gl', (rv * (1 - fade)).toFixed(3));
-    pin.style.setProperty('--cv', (clamp(rv * 4) * (1 - fade) * (1 - 0.82 * iv) * (1 - vv)).toFixed(3));   // 빛이 들기 전·꺼진 뒤에는 검은 실루엣도 보이지 않게
+    pin.style.setProperty('--gl', (rv * (1 - fade) * (g.solo ? 1 - smooth01(clamp(iv / 0.6)) : 1)).toFixed(3));
+    pin.style.setProperty('--cv', (clamp(rv * 4) * (1 - fade) * (g.solo ? 1 - smooth01(clamp(iv / 0.6)) : 1 - 0.82 * iv) * (1 - vv)).toFixed(3));   // 빛이 들기 전·꺼진 뒤에는 검은 실루엣도 보이지 않게
   }
 }
 const smooth01 = (m) => m * m * (3 - 2 * m);
@@ -1642,9 +1790,17 @@ if (hd.classList.contains('has-entry--half')) {
   // 머리글이 화면 윗변 가까이(12%) 온 뒤에야 내려오기 시작한다. 스크롤 도중에 일부만 걸쳐 보이지 않게 한다.
 const inPlace = REDUCED || hr.top <= h * 0.12;
 // 순서: 앞 챕터 연도(1931)가 진하게 떠 있다가 → 슬롯처럼 이 챕터 연도로 굴러가고 → 옅어지며 → 기타가 내려오고 → 제목이 나온다
-hd._ts = Math.min(3.4, Math.max(0, (hd._ts || 0) + (inPlace ? dtH : -dtH * 2.2)));
-if (!REDUCED && hd._ts < 3.4 && hr.top <= h * 0.12 && hr.top > -h * 0.15) lockWant = scrollY + hr.top;   // 연출 중 — 머리글 자리에 세워 둔다
-const ts = REDUCED ? 3.4 : hd._ts;
+// 앞 챕터와 연도가 같으면 연도 릴을 건너뛰고 어둠이 걷히는 데서 시작해 1.3초 안에 끝낸다. 끝까지 본 들머리는 되감지도, 다시 세우지도 않는다
+const same = hd.classList.contains('has-entry--same');
+if (hd._ts >= 3.4) hd._seen = true;
+const pace = same ? 2.6 : 1;
+hd._ts = hd._seen ? 3.4 : Math.min(3.4, Math.max(0, (hd._ts || 0) + (inPlace ? dtH * pace : -dtH * 2.2)));
+if (!REDUCED && hd._ts < 3.4 && hr.top <= h * 0.12 && hr.top > -h * 0.15) {
+  lockWant = scrollY + hr.top;   // 연출 중 — 머리글 자리에 세워 둔다
+  hd._ts = Math.min(3.4, hd._ts + lockRush);
+  lockRush = 0;
+}
+const ts = REDUCED ? 3.4 : same ? 1.75 + hd._ts * (1.65 / 3.4) : hd._ts;
 // 아래에서 솟는 들머리 — 머리글이 위로 빠지는 동안 물건은 스크롤보다 빨리 화면 위로 사라진다(머리글이 60% 올라가면 다 빠진다)
 if (hd.classList.contains('has-entry--rise')) hd.style.setProperty('--lv', clamp(-hr.top / (h * 0.6)).toFixed(4));
 const m = clamp((ts - 0.25) / 1.4);
@@ -1671,7 +1827,7 @@ const yr = hd.querySelector('.ch-bgyear--in');
 if (yr && yr.offsetWidth) {
   const W = hd.clientWidth, H = hd.clientHeight, w = yr.offsetWidth, hh = yr.offsetHeight;
   const S = Math.max(1, Math.min(W * 0.92 / w, H * 0.78 / hh));
-  const k = 1 - fd;
+  const k = same ? 0 : 1 - fd;
   const tx = ((W - w * S) / 2 - yr.offsetLeft) * k;
   const ty = ((H - hh * S) / 2 - yr.offsetTop) * k;
   yr.style.transform = `translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, 0) scale(${(1 + (S - 1) * k).toFixed(4)})`;
@@ -1765,7 +1921,22 @@ L.style.opacity = next <= 0 ? '0' : '1';
 
   if (activeChapter) {
     const i = chapters.indexOf(activeChapter);
-    if (i >= 0) railItems.forEach((li, k) => li.classList.toggle('is-on', k === i));
+    if (i >= 0) {
+      railItems.forEach((li, k) => { li.classList.toggle('is-on', k === i); li.firstElementChild.toggleAttribute('aria-current', k === i); if (k === i) li.firstElementChild.setAttribute('aria-current', 'location'); });
+      // 레일의 세로 진행선 — 지금 챕터 항목까지 차고, 챕터 안에서 읽은 만큼 다음 항목 쪽으로 더 찬다
+      const r = activeChapter.getBoundingClientRect();
+      const f = clamp((h * 0.5 - r.top) / Math.max(1, r.height));
+      const a = railItems[i], b = railItems[i + 1];
+      const y0 = a.offsetTop + a.offsetHeight / 2;
+      const y1 = b ? b.offsetTop + b.offsetHeight / 2 : railList.offsetHeight;
+      const p = clamp((y0 + (y1 - y0) * f) / railList.offsetHeight);
+      railFill.style.transform = `scaleY(${p.toFixed(4)})`;
+      railTrack.style.setProperty('--p', p.toFixed(4));
+      railNow.style.setProperty('--p', p.toFixed(4));
+      railTrack.style.setProperty('--s0', (y0 / railList.offsetHeight).toFixed(4));
+      railTrack.style.setProperty('--s1', (y1 / railList.offsetHeight).toFixed(4));
+      if (railNow.textContent !== activeChapter.dataset.year) railNow.textContent = activeChapter.dataset.year;
+    }
     const y = activeChapter.dataset.year;
     if (y !== shownYear) { shownYear = y; nowYear.textContent = y; }
   }
@@ -1810,6 +1981,8 @@ if (!REDUCED) {
 
   const snapTarget = (y) => {
     const h = innerHeight;
+    // Keep scroll positions free inside 3D chapters.
+    if ([...document.querySelectorAll('.has-m3')].some(el => { const top = el.getBoundingClientRect().top + scrollY; return y >= top && y < top + el.offsetHeight - h; })) return clamp(y, 0, maxY());
     const pts = [];
     const narrow = new Set();           // 챕터 머리 — 가까이 왔을 때만 끌어당겨서 헤드가 나오는 중간에도 멈출 수 있다
     const wide = new Set();
@@ -1831,6 +2004,7 @@ if (!REDUCED) {
     // 가로 무대 첫 화면(인용)도 무대 점 — 반쪽 들머리에서 넘어올 때 건너뛰지 않게
     document.querySelectorAll('.ch-head.has-entry--half ~ .hero-wrap .hero-step').forEach((el) => { push(el); wide.add(pts[pts.length - 1]); });
     document.querySelectorAll('.hx-snap').forEach((el) => {
+      if (el.closest('.has-m3')) return;
       pts.push(base + el.getBoundingClientRect().top - h * FEEL.anchor);
       wide.add(pts[pts.length - 1]);
       if (el.dataset.free) free.add(pts[pts.length - 1]);
@@ -1875,9 +2049,12 @@ return clamp(best, 0, maxY());
   addEventListener('wheel', (e) => {
     if (e.ctrlKey || document.body.classList.contains('booting')) return;   // 확대·시퀀스 중에는 건드리지 않는다
     e.preventDefault();
-    if (lockOn) return;                                                      // 들머리 연출 중 — 입력을 버린다
     const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? innerHeight : 1;
     const dy = clamp(e.deltaY * unit * FEEL.wheel, -FEEL.maxStep, FEEL.maxStep);
+    if (lockOn) {                                                            // 들머리 연출 중 — 내리면 앞당기고, 올리면 놓아 준다
+      lockInput(dy);
+      if (lockOn) return;
+    }
     if (dy) dir = Math.sign(dy);
     target = clamp(target + dy, 0, maxY());
     clearTimeout(idleTimer);

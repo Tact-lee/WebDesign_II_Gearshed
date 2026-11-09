@@ -1,0 +1,186 @@
+/* =========================================================
+   GEARSHED — 첫 화면(랜딩)
+   프리로더(사진이 연도순으로 넘어감) → 흩어진 자료가 깊은 곳에서 다가와 지나감(Floema 방식)
+   → 세 섹션이 전체 화면 사진으로 한 장씩 겹쳐 올라옴.
+   토큰·서체는 Timeline과 같다. 화면을 잠그지 않고, 스크롤 진행도로만 움직인다.
+   ========================================================= */
+
+:root {
+  --cream: #ece9e1;
+  --cream-2: #e2ded3;
+  --cream-3: #d6d1c4;
+  --ink: #15130f;
+  --ink-2: #4b453c;
+  --ink-3: #6f675c;
+  --night: #0b0a09;
+  --paper: #f2efe8;
+
+  --f-title: "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+  --f-serif: "Instrument Serif", Georgia, serif;
+
+  --gutter: clamp(18px, 4vw, 72px);
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --ease-io: cubic-bezier(.76, 0, .24, 1);
+  --noise: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='1' seed='3'/><feColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.5 0 0 0 -0.08'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+* { box-sizing: border-box; }
+html { -webkit-font-smoothing: antialiased; background: var(--cream); }
+body {
+  margin: 0; background: var(--cream); color: var(--ink);
+  font-family: var(--f-serif); font-size: 21px; line-height: 1.3;
+  overflow-x: hidden;
+}
+body.is-booting { overflow: hidden; }
+::selection { background: var(--ink); color: var(--cream); }
+a { color: inherit; }
+a:focus-visible, [tabindex]:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+#sections:focus { outline: none; }
+
+.grain {
+  position: fixed; inset: 0; z-index: 95; pointer-events: none;
+  background-image: var(--noise); background-size: 200px; opacity: .22; mix-blend-mode: multiply;
+}
+
+.skip {
+  position: fixed; left: var(--gutter); top: 12px; z-index: 200;
+  padding: 10px 16px; background: var(--ink); color: var(--cream);
+  font: 600 13px/1 var(--f-title); text-decoration: none;
+  transform: translateY(-160%); transition: transform .2s var(--ease);
+}
+.skip:focus, .skip:focus-visible { transform: none; outline: 2px solid var(--cream); outline-offset: 2px; }
+
+/* ---------- 상단 바 — Timeline과 같은 글꼴·크기, 바탕에 따라 반전 ---------- */
+.bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 60;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  padding: 18px var(--gutter);
+  font-family: var(--f-title); mix-blend-mode: difference; color: #fff;
+}
+.brand { font-weight: 800; font-size: 19px; letter-spacing: -.02em; text-decoration: none; justify-self: start; }
+.brand span { opacity: .55; }
+.bar-nav { display: flex; gap: 22px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+.bar-nav a { text-decoration: none; opacity: .9; transition: opacity .25s; }
+.bar-nav a:hover { opacity: 1; text-decoration: underline; text-underline-offset: 5px; text-decoration-thickness: 1px; }
+.bar-nav [aria-disabled] { opacity: .38; cursor: default; }
+
+/* ---------- 프리로더 — 밀착 인화지. 칸의 사진은 첫 화면 자료와 같은 요소라 JS가 자리를 잡는다 ---------- */
+.pre { position: fixed; inset: 0; z-index: 90; pointer-events: none; }
+body.pre-gone .pre { display: none; }
+.pre-foot {
+  position: absolute; left: 50%; top: 70%; translate: -50% 0;
+  display: grid; justify-items: center; gap: 12px; width: min(320px, 70vw);
+  transition: opacity .3s var(--ease), translate .3s var(--ease);
+}
+/* 퍼지기 시작하면 막대와 연도는 먼저, 조금만 움직이며 물러난다 */
+body.pre-release .pre-foot { opacity: 0; translate: -50% 4px; }
+/* 칸 아래 연도 — 작게, Timeline 레일의 연도와 같은 글꼴 */
+.pre-year { font: 700 13px/1 var(--f-title); letter-spacing: .02em; font-variant-numeric: tabular-nums; color: var(--ink); }
+.pre-bar { position: relative; width: 100%; height: 1px; background: rgba(21, 19, 15, .16); }
+.pre-bar i { position: absolute; inset: 0; background: var(--ink); transform-origin: left; transform: scaleX(var(--load, 0)); transition: transform .3s var(--ease); }
+
+/* ---------- 흩어진 자료 ---------- */
+/* 첫 화면은 한 화면 — 스크롤하면 곧바로 섹션이 올라온다 */
+.stage { position: relative; height: 100vh; height: 100svh; }
+.stage-pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
+.field { position: absolute; inset: 0; z-index: 1; }
+/* 위치·크기는 JS가 원근으로 계산해 transform 하나로 준다 */
+.it {
+  position: absolute; left: 0; top: 0; height: var(--h); width: auto; max-width: none;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+  user-select: none; -webkit-user-drag: none;
+}
+.it.is-cut { filter: drop-shadow(0 calc(var(--h) * .03) calc(var(--h) * .05) rgba(40, 30, 20, .18)); }
+.it.is-doc { box-shadow: 0 10px 30px -14px rgba(30, 22, 12, .35); }
+
+.hero {
+  position: absolute; left: 50%; top: 50%; translate: -50% -50%; z-index: 3;
+  width: min(820px, 44vw, calc(100vw - 2 * var(--gutter)));
+  text-align: center;
+  opacity: var(--hop, 1); filter: blur(var(--hbl, 0px));
+  transform: translateY(var(--hy, 0px));
+}
+.hero h1 {
+  margin: 0; font-family: var(--f-serif); font-weight: 400;
+  font-size: clamp(38px, 3.6vw, 72px); line-height: 1.04; letter-spacing: -.012em;
+  text-wrap: balance;
+}
+/* 가운데 글 뒤를 살짝 밝혀, 뒤로 지나가는 자료 위에서도 읽힌다 */
+.hero::before {
+  content: ""; position: absolute; inset: -18% -14%; z-index: -1;
+  background: radial-gradient(closest-side, rgba(236, 233, 225, .92), rgba(236, 233, 225, .6) 55%, rgba(236, 233, 225, 0));
+}
+
+/* 가운데 문장과 안내 — 사진이 제자리에 닿을 즈음 맺힌다(투명도 + 살짝 위치 + 흐림) */
+.hero h1 { transition: opacity .8s var(--ease), filter .8s var(--ease), translate .8s var(--ease); }
+body.is-booting .hero h1 { opacity: 0; filter: blur(6px); translate: 0 10px; }
+.cue { transition: opacity .8s var(--ease) .2s; }
+body.is-booting .cue { opacity: 0; }
+.cue {
+  position: absolute; left: 50%; bottom: 26px; translate: -50% 0; margin: 0; z-index: 3;
+  font: 600 11px/1 var(--f-title); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3);
+  opacity: var(--cop, 1);
+}
+.cue::after {
+  content: ""; display: block; width: 1px; height: 28px; margin: 10px auto 0; background: currentColor;
+  transform-origin: top; animation: cue 2.4s var(--ease) infinite;
+}
+@keyframes cue { 0% { transform: scaleY(0); } 45% { transform: scaleY(1); transform-origin: top; } 46% { transform-origin: bottom; } 100% { transform: scaleY(0); transform-origin: bottom; } }
+
+/* ---------- 세 섹션 — 전체 화면 사진이 한 장씩 겹쳐 올라온다 ---------- */
+.panels { position: relative; }
+.panel {
+  position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden;
+  background: var(--night); color: var(--paper);
+}
+.panel-img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;
+  transform: scale(var(--ps, 1.08)); transform-origin: 50% 60%;
+}
+.panel::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to top, rgba(11, 10, 9, .82) 0%, rgba(11, 10, 9, .45) 34%, rgba(11, 10, 9, 0) 62%);
+}
+.panel-body {
+  position: absolute; z-index: 2; left: var(--gutter); right: var(--gutter); bottom: clamp(40px, 8vh, 88px);
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: 48px;
+}
+.panel h2 {
+  grid-column: 1 / -1; margin: 0 0 20px;
+  font: 800 clamp(72px, 12vw, 220px)/.86 var(--f-title); letter-spacing: -.05em;
+}
+.panel-desc { margin: 0; max-width: 30ch; font-size: 21px; line-height: 1.32; color: rgba(242, 239, 232, .88); }
+.panel-row { margin: 0; display: flex; align-items: center; gap: 36px; justify-self: end; }
+.panel-meta { font: 600 12px/1 var(--f-title); letter-spacing: .08em; text-transform: uppercase; font-variant-numeric: tabular-nums; color: rgba(242, 239, 232, .72); white-space: nowrap; }
+.panel-go {
+  position: relative; display: inline-flex; align-items: center; gap: 14px; padding: 14px 0;
+  font: 700 15px/1 var(--f-title); text-decoration: none; color: var(--paper); white-space: nowrap;
+}
+.panel-go svg { width: 24px; height: 12px; transition: transform .35s var(--ease); }
+.panel-go::after {
+  content: ""; position: absolute; left: 0; right: 38px; bottom: 8px; height: 1px; background: currentColor;
+  transform: scaleX(0); transform-origin: left; transition: transform .45s var(--ease);
+}
+.panel-go:hover::after, .panel-go:focus-visible::after { transform: scaleX(1); }
+.panel-go:hover svg { transform: translateX(5px); }
+.panel-go:active { transform: translateY(1px); }
+
+.foot { position: relative; z-index: 2; padding: 28px var(--gutter) 34px; background: var(--cream); }
+.foot p { margin: 0; max-width: 100ch; font: 400 12px/1.55 var(--f-title); color: var(--ink-3); }
+
+/* ---------- 좁은 화면 ---------- */
+@media (max-width: 760px) {
+  .bar { grid-template-columns: auto 1fr; }
+  .bar-nav { justify-self: end; gap: 14px; font-size: 11px; }
+  .hero { width: calc(100vw - 2 * var(--gutter)); }
+  .hero h1 { font-size: clamp(32px, 9vw, 44px); }
+  .panel-body { grid-template-columns: 1fr; row-gap: 22px; }
+  .panel-row { justify-self: start; flex-wrap: wrap; gap: 8px 24px; }
+}
+
+/* ---------- 움직임 줄이기 — 다가오는 장면과 넘기기 없이 바뀐다 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .pre-foot, .pre-bar i, .hero h1, .cue { transition: none !important; }
+  .cue::after { animation: none; transform: none; }
+}

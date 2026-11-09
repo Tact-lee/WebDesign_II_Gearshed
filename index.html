@@ -4,11 +4,11 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>GEARSHED — Timeline</title>
-<meta name="description" content="A scroll through the instruments, amplifiers and effects that built the electric guitar, 1931 to 1998." />
+<meta name="description" content="A scroll through the instruments, amplifiers and effects that built the electric guitar, 1932 to 1998." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="css/timeline.css?v=202611031021" />
+<link rel="stylesheet" href="css/timeline.css?v=202611100813" />
 </head>
 <body class="is-loading booting">
 
@@ -16,11 +16,12 @@
 
 <div id="grain" aria-hidden="true"></div>
 
+<a class="skip" href="#tl">Skip to the timeline</a>
 <header class="topbar boot-fade">
   <a class="brand" href="#top">GEAR<span>SHED</span></a>
   <nav class="topnav" aria-label="Sections">
     <a href="#top" class="is-on" data-t="nav.timeline">Timeline</a>
-    <a href="#colophon" data-t="nav.sources">Sources</a>
+    <a href="#sources" data-t="nav.sources">Sources</a>
   </nav>
   <div class="lang" role="group" aria-label="Language">
     <button class="is-on" data-lang="en">EN</button>
@@ -40,23 +41,23 @@
       <p class="intro-sub boot-rise" data-t="intro.sub">Nobody set out to invent rock and roll. They were trying to be heard over a horn section. What follows is how a louder guitar was built, piece by piece, by people who mostly couldn&#8217;t play one.</p>
       <dl class="intro-stats boot-rise">
         <div><dt data-t="stat.chapters">Chapters</dt><dd data-stat="chapters">41</dd></div>
-        <div><dt data-t="stat.span">Span</dt><dd data-stat="years">1931–1998</dd></div>
+        <div><dt data-t="stat.span">Span</dt><dd data-stat="years">1932–1998</dd></div>
       </dl>
     </div>
     <div class="scroll-cue boot-rise"><span data-t="scroll">Scroll</span><i></i></div>
   </section>
 
-  <div id="tl" aria-busy="true"></div>
+  <div id="tl" aria-busy="true" tabindex="-1"></div>
 
-  <footer id="colophon">
-    <div class="colophon-inner">
-      <h2 data-t="colophon.title">Colophon</h2>
-      <p data-t="colophon.body">Research notes, patent scans and open questions live beside this page in the project repository. Every claim in a chapter carries a source entry; contested claims are marked rather than resolved.</p>
-      <p class="small" data-t="colophon.note">Layout preview — media slots are placeholders. 3D is loaded only where a model exists.</p>
+  <footer id="sources">
+    <div class="sources-inner">
+      <h2>Sources</h2>
+      <div class="sources-list"></div>
+      <p class="sources-note">Photographs are resized for this site.</p>
     </div>
   </footer>
 </main>
 
-<script src="js/timeline.js?v=202611031021" type="module"></script>
+<script src="js/timeline.js?v=202611100813" type="module"></script>
 </body>
 </html>

@@ -121,8 +121,7 @@ function unload(st) {
 }
 
 /* ---------- 장면 ---------- */
-function setup(st, model) {
-  const scene = new T.Scene();
+function setup(st, model) {  const scene = new T.Scene();
   scene.environment = ENV;
   scene.environmentIntensity = 0;
   const cam = new T.PerspectiveCamera(30, 1, 0.004, 30);
@@ -215,6 +214,67 @@ function explodeParts(model, ex) {
     if (!g) continue;
     g.box.union(new T.Box3().setFromObject(node).applyMatrix4(toModel));
     parts.push({ o: node, base: node.position.clone(), dir: local(node, g.v) });
+  }
+  // regions — 재질별로 합쳐진 모델용. 메시 안에서 떨어져 있는 덩어리를 찾아, 모델 좌표 상자(box) 안에 온전히 들어가면 그 부품으로 나눈다.
+  // {id, box: [x0,y0,z0,x1,y1,z1], v, min?: [dx,dy,dz] 덩어리 최소 크기, fade?: true 분해할 때 사라짐(현)}. 앞의 항목이 우선이다
+  if (ex.regions) {
+    const regs = ex.regions.map((r) => ({ ...r, b: new T.Box3(new T.Vector3(...r.box.slice(0, 3)), new T.Vector3(...r.box.slice(3))), v: new T.Vector3(...(r.v || [0, 0, 0])) }));
+    const all = [];
+    root.traverse((o) => { if (o.isMesh && o.geometry.index) all.push(o); });
+    const fadeMat = new Map();
+    for (const mesh of all) {
+      mesh.updateWorldMatrix(true, false);
+      const geo = mesh.geometry, pos = geo.attributes.position, idx = geo.index.array, n = pos.count;
+      const m = new T.Matrix4().copy(toModel).multiply(mesh.matrixWorld);
+      const par = new Int32Array(n).map((_, i) => i);
+      const find = (a) => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
+      const v = new T.Vector3(), weld = new Map(), pts = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) {
+        v.fromBufferAttribute(pos, i).applyMatrix4(m);
+        v.toArray(pts, i * 3);
+        const key = `${Math.round(v.x * 5e4)},${Math.round(v.y * 5e4)},${Math.round(v.z * 5e4)}`;   // UV 경계로 갈라진 정점을 잇는다
+        if (weld.has(key)) par[find(i)] = find(weld.get(key)); else weld.set(key, i);
+      }
+      for (let i = 0; i < idx.length; i += 3) { const a = find(idx[i]); par[find(idx[i + 1])] = a; par[find(idx[i + 2])] = a; }
+      const boxes = new Map();
+      for (let i = 0; i < n; i++) {
+        const r = find(i);
+        if (!boxes.has(r)) boxes.set(r, new T.Box3());
+        boxes.get(r).expandByPoint(v.fromArray(pts, i * 3));
+      }
+      const pick = new Map();
+      for (const [r, b] of boxes) {
+        const s = b.getSize(v);
+        pick.set(r, regs.find((g) => g.b.containsBox(b) && (!g.min || (s.x >= g.min[0] && s.y >= g.min[1] && s.z >= g.min[2]))) || null);
+      }
+      if (![...pick.values()].some(Boolean)) continue;
+      const tri = new Map();
+      for (let i = 0; i < idx.length; i += 3) {
+        const g = pick.get(find(idx[i]));
+        const key = g ? g.id : '';
+        if (!tri.has(key)) tri.set(key, []);
+        tri.get(key).push(idx[i], idx[i + 1], idx[i + 2]);
+      }
+      for (const [key, list] of tri) {
+        const g = regs.find((x) => x.id === key);
+        const sub = new T.BufferGeometry();
+        for (const a in geo.attributes) sub.setAttribute(a, geo.attributes[a]);
+        sub.setIndex(new T.BufferAttribute(n > 65535 ? new Uint32Array(list) : new Uint16Array(list), 1));
+        let mat = mesh.material;
+        if (g?.fade) {
+          if (!fadeMat.has(mat)) { const c = mat.clone(); c.transparent = true; fadeMat.set(mat, c); fades.push(c); }
+          mat = fadeMat.get(mat);
+        }
+        const sm = new T.Mesh(sub, mat);
+        sm.name = key || mesh.name;
+        sm.renderOrder = mesh.renderOrder;
+        sm.position.copy(mesh.position); sm.quaternion.copy(mesh.quaternion); sm.scale.copy(mesh.scale);
+        mesh.parent.add(sm);
+        sm.updateMatrixWorld(true);
+        if (g && !g.fade) parts.push({ o: sm, base: sm.position.clone(), dir: local(sm, g.v) });
+      }
+      mesh.parent.remove(mesh);
+    }
   }
   // 나사 — 서로 맞닿은 조각을 한 개로 묶고, 그 상자가 걸치는 부품 가운데 가장 작은 것을 따라간다
   const pad = 0.004;
@@ -352,7 +412,7 @@ function between(A, B, m, now) {
   const e = ease(m);
   const span = Math.hypot(B.t[0] - A.t[0], B.t[1] - A.t[1], B.t[2] - A.t[2]);
   const swoop = 0.18 + 0.5 * clamp(span / 0.5);                  // 멀리 갈수록 크게 물러났다 다시 다가간다
-  const lift = Math.sin(Math.PI * m);
+  const lift = REDUCED ? 0 : Math.sin(Math.PI * m);
   const P = {
     t: [0, 1, 2].map((i) => lerp(A.t[i], B.t[i], e)),
     az: A.az + wrapDeg(B.az - A.az) * e,
@@ -373,6 +433,56 @@ function between(A, B, m, now) {
     P.d *= 1 + 0.025 * wave(t, 13, 2.1) * w;
   }
   return P;
+}
+
+// A single scroll-space curve. Shape-preserving tangents carry velocity through
+// authored waypoints without easing to a halt or overshooting the instrument.
+function continuousCamera(st, w, h, progress) {
+  const cacheKey = `${w}:${h}`;
+  if (st.cameraPath?.key !== cacheKey) {
+    const nodes = [];
+    let start = 0;
+    st.cfg.shots.forEach((shot, shotIndex) => {
+      const sh = w <= 900 && shot.mobile ? { ...shot, ...shot.mobile } : shot;
+      const span = shot.span || 1.4;
+      const points = sh.keys ? sh.keys.map(k => k.at) : [0];
+      points.forEach(at => {
+        const p = pose(sh, w, h, at);
+        const prev = nodes[nodes.length - 1];
+        if (prev) {
+          p.az = prev.p.az + wrapDeg(p.az - prev.p.az);
+          p.roll = prev.p.roll + wrapDeg(p.roll - prev.p.roll);
+        }
+        nodes.push({ at: start + at * Math.max(0.1, span - (shotIndex === st.cfg.shots.length - 1 ? 0 : 0.62)), p });
+      });
+      start += span;
+    });
+    st.cameraPath = { key: cacheKey, nodes };
+  }
+  const nodes = st.cameraPath.nodes;
+  let j = 0;
+  while (j < nodes.length - 2 && progress > nodes[j + 1].at) j++;
+  const a = nodes[j], b = nodes[j + 1];
+  const duration = b.at - a.at;
+  const u = clamp((progress - a.at) / duration);
+  const curve = get => {
+    const slope = i => (get(nodes[i + 1].p) - get(nodes[i].p)) / (nodes[i + 1].at - nodes[i].at);
+    const tangent = i => {
+      if (i === 0) return slope(0);
+      if (i === nodes.length - 1) return 0;
+      const l = slope(i - 1), r = slope(i);
+      return l * r <= 0 ? 0 : 2 * l * r / (l + r);
+    };
+    const u2 = u * u, u3 = u2 * u;
+    return (2*u3-3*u2+1)*get(a.p) + (u3-2*u2+u)*duration*tangent(j)
+      + (-2*u3+3*u2)*get(b.p) + (u3-u2)*duration*tangent(j+1);
+  };
+  return {
+    t: [0,1,2].map(i => curve(p => p.t[i])),
+    az: curve(p => p.az), el: curve(p => p.el), roll: curve(p => p.roll),
+    d: Math.exp(curve(p => Math.log(p.d))), fov: curve(p => p.fov),
+    sx: curve(p => p.sx), sy: curve(p => p.sy),
+  };
 }
 
 function mixPose(A, B, k) {
@@ -428,17 +538,24 @@ export function m3Draw(el, s) {
   const m = s.x - i;
   const sh = shots[i];
   const nx = shots[Math.min(N - 1, i + 1)];
-  const A = pose(sh, w, h, s.lp);                                   // 머무는 동안의 움직임까지 들어간 지금 칸
-  const B = pose(nx, w, h, 0);
-  let P = between(A, B, m, s.now);
+  const A = pose(sh, w, h, REDUCED ? 0.35 : s.lp);                                   // 머무는 동안의 움직임까지 들어간 지금 칸
+  const B = pose(nx, w, h, REDUCED ? 0.35 : 0);
+  let P = REDUCED ? between(A, B, m, s.now) : continuousCamera(st, w, h, s.progress || 0);
+  // idle: 스크롤을 멈춰도 살아 있게 — 카메라가 아주 조금 숨 쉬고, 모델이 미세하게 흔들리고, 빛이 표면 위를 천천히 흐른다
+  const idle = st.cfg.idle && !REDUCED;
+  const sec = s.now / 1000;
+  if (idle) {
+    P = { ...P, az: P.az + 0.7 * wave(sec, 11, 1.3), el: P.el + 0.4 * wave(sec, 14), roll: P.roll + 0.3 * wave(sec, 17, 0.4), d: P.d * (1 + 0.008 * wave(sec, 13, 2.1)) };
+  }
   if (s.rv < 1 && st.cfg.intro) P = mixPose(pose(st.cfg.intro, w, h), P, ease(s.rv));
 
   // 모델 — 한 바퀴(spin), 일부만 돌았다 되돌아옴(turn), 시간에 따른 좌우 흔들림(sway), 분해(explode)
   const sway = (x) => (x.sway && !REDUCED ? x.sway.amp * Math.sin((s.now / 1000) * (2 * Math.PI / x.sway.period)) : 0);
   let yaw = 0;
-  if (sh.spin) yaw += sh.spin * ease(s.lp);
-  if (sh.turn) yaw += sh.turn * (m > 0 ? 1 - ease(m) : ease(s.lp));
+  if (sh.spin && !REDUCED) yaw += sh.spin * ease(s.lp);
+  if (sh.turn && !REDUCED) yaw += sh.turn * (m > 0 ? 1 - ease(m) : ease(s.lp));
   yaw += sway(sh) * (1 - ease(m)) + (m > 0 ? sway(nx) * ease(m) : 0);
+  if (idle) yaw += 0.7 * wave(sec, 10.5, 0.7);
   // 분해 정도는 두 칸 사이에서 이어진다 — 분해된 칸에서 다음 칸으로 옮겨 가는 동안 부품이 제자리로 붙는다
   const exOf = (x, lp) => {
     if (!x.explode) return 0;
@@ -447,6 +564,7 @@ export function m3Draw(el, s) {
   };
   const exA = lerp(exOf(sh, s.lp), exOf(nx, 0), ease(m));
   st.pivot.rotation.y = yaw * RAD;
+  st.pivot.rotation.x = idle ? 0.22 * RAD * wave(sec, 12.5, 2) : 0;
   for (const p of st.parts) p.o.position.copy(p.base).addScaledVector(p.dir, exA);
   const so = 1 - clamp(exA * 2.5);
   for (const f of st.fades) { f.opacity = so; f.depthWrite = so > 0.99; }
@@ -454,13 +572,9 @@ export function m3Draw(el, s) {
   // 빛 — 들머리에서는 테두리 빛이 먼저, 그다음 키 조명과 반사. 끝에서는 함께 꺼진다.
   // 가만히 있을 때도 반사가 표면 위를 천천히 흐르고 키 조명이 조금씩 자리를 옮긴다
   const on = 1 - s.fade;
-  let pulse = 1;
-  if (!REDUCED) {
-    const tt = s.now / 1000;
-    st.scene.environmentRotation.y = 0.35 * wave(tt, 16) + 0.1 * wave(tt, 7, 1);
-    st.key.position.set(-1.2 + 0.7 * wave(tt, 12), 1.4 + 0.35 * wave(tt, 15, 1), 1.6);
-    pulse = 1 + 0.12 * wave(tt, 9);
-  }
+  const pulse = idle ? 1 + 0.2 * wave(sec, 9) : 1;
+  st.scene.environmentRotation.y = idle ? 0.55 * wave(sec, 16, 0.6) : 0;
+  st.key.position.set(-1.2 + (idle ? 0.95 * wave(sec, 12, 1.1) : 0), 1.4 + (idle ? 0.45 * wave(sec, 15) : 0), 1.6);
   st.rim.intensity = 2.6 * pulse * clamp(s.rv * 2.5) * on;
   st.rim2.intensity = 1.4 * (2 - pulse) * clamp(s.rv * 2) * on;
   st.key.intensity = 1.5 * clamp((s.rv - 0.3) / 0.7) * on;
