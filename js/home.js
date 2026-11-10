@@ -200,8 +200,8 @@ function frame(now) {
 /* ---------- 공개 범위 — Timeline(js/timeline.js)의 BUILD_UNTIL·BUILD_SKIP을 그대로 읽는다 ---------- */
 async function chapters() {
   const [src, data] = await Promise.all([
-    fetch('js/timeline.js?v=202611100813').then((r) => r.text()),
-    fetch('data/timeline.en.json?v=202611100813').then((r) => r.json()),
+    fetch('js/timeline.js?v=202611100921').then((r) => r.text()),
+    fetch('data/timeline.en.json?v=202611100921').then((r) => r.json()),
   ]);
   const until = (src.match(/const BUILD_UNTIL = '([^']+)'/) || [])[1];
   const skip = ((src.match(/const BUILD_SKIP = \[([^\]]*)\]/) || [])[1] || '').match(/'([^']+)'/g)?.map((s) => s.slice(1, -1)) || [];

@@ -168,6 +168,9 @@ body.is-booting .cue { opacity: 0; }
 
 .foot { position: relative; z-index: 2; padding: 28px var(--gutter) 34px; background: var(--cream); }
 .foot p { margin: 0; max-width: 100ch; font: 400 12px/1.55 var(--f-title); color: var(--ink-3); }
+/* 저작권 — 크레딧 아래 맨 끝 줄 */
+.foot .foot-copy { max-width: none; color: var(--ink-2); }
+.foot-copy small { font-size: 12px; font-weight: 600; letter-spacing: .02em; }
 
 /* ---------- 좁은 화면 ---------- */
 @media (max-width: 760px) {
