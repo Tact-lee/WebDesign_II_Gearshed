@@ -96,16 +96,22 @@ body.pre-release .pre-foot { opacity: 0; translate: -50% 4px; }
 
 .hero {
   position: absolute; left: 50%; top: 50%; translate: -50% -50%; z-index: 3;
-  width: min(820px, 44vw, calc(100vw - 2 * var(--gutter)));
+  width: calc(100vw - 2 * var(--gutter));
   text-align: center;
   opacity: var(--hop, 1); filter: blur(var(--hbl, 0px));
   transform: translateY(var(--hy, 0px));
 }
+/* 제목 — 대문자 두 줄. 기본은 Instrument Sans(굵고 좁게: 굵기 700·폭 80%), 악기와 연주자(guitars · amps · pedals · players)만 Instrument Serif.
+   커서 가까운 글자일수록 산세리프는 가늘어지고 세리프는 굵어지며, 둘 다 자간이 벌어진다(JS) */
 .hero h1 {
-  margin: 0; font-family: var(--f-serif); font-weight: 400;
-  font-size: clamp(38px, 3.6vw, 72px); line-height: 1.04; letter-spacing: -.012em;
-  text-wrap: balance;
+  position: relative; z-index: 1; margin: 0;
+  font-family: "Instrument Sans", var(--f-title); font-weight: 700; font-stretch: 80%; letter-spacing: -.015em;
+  font-size: clamp(30px, 4.9vw, 116px); line-height: .92; text-transform: uppercase;
 }
+.hl { display: block; }
+.hero h1 .sf { font-family: var(--f-serif); font-style: normal; font-weight: 400; letter-spacing: -.01em; }
+.hx-w { display: inline-block; white-space: nowrap; }
+.hx-c { display: inline-block; -webkit-text-stroke: 0 currentColor; paint-order: stroke fill; }
 /* 가운데 글 뒤를 살짝 밝혀, 뒤로 지나가는 자료 위에서도 읽힌다 */
 .hero::before {
   content: ""; position: absolute; inset: -18% -14%; z-index: -1;
@@ -177,7 +183,7 @@ body.is-booting .cue { opacity: 0; }
   .bar { grid-template-columns: auto 1fr; }
   .bar-nav { justify-self: end; gap: 14px; font-size: 11px; }
   .hero { width: calc(100vw - 2 * var(--gutter)); }
-  .hero h1 { font-size: clamp(32px, 9vw, 44px); }
+  .hero h1 { font-size: clamp(30px, 10.4vw, 52px); line-height: .92; }
   .panel-body { grid-template-columns: 1fr; row-gap: 22px; }
   .panel-row { justify-self: start; flex-wrap: wrap; gap: 8px 24px; }
 }
