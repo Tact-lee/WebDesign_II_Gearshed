@@ -115,15 +115,17 @@ function node(it, x, y, h, z0, old) {
 }
 
 /* ---------- 밀착 인화지 — 칸의 크기와 자리 ---------- */
-// 인화지에 넣을 자료 — 첫 화면에서 처음부터 또렷한 것만(멀리 있어 옅은 자료를 넣으면 퍼지는 동안 옅어져 보인다)
+// 인화지에는 47장 모두 넣는다. 첫 화면에서 처음부터 또렷한 자료는 칸에서 제자리로 퍼지고,
+// 아직 멀리 있어 옅은 자료는 옅어지지 않고 또렷한 채로 화면 밖으로 날아 나간다(나중에 깊은 곳에서 다시 다가온다)
 let sheetOrder = [];
 const nearRange = () => (NARROW() ? [0.6, 0.85] : [0.45, 0.72]);
 function pickSheet() {
   const [a, b] = nearRange();
-  sheetOrder = order.filter((ni) => {
-    const s0 = P / (P - nodes[ni].z0);
-    return smooth(range(s0, a, b)) * (1 - smooth(range(s0, 1.9, 2.8))) >= 0.98;
-  });
+  sheetOrder = [...order];
+  for (const nd of nodes) {
+    const s0 = P / (P - nd.z0);
+    nd.startVis = smooth(range(s0, a, b)) * (1 - smooth(range(s0, 1.9, 2.8))) >= 0.98;
+  }
 }
 function sheetGeom(W, H) {
   const n = Math.max(1, sheetOrder.length);
@@ -196,6 +198,20 @@ function frame(now) {
       const a = nd.shownAt ? outExpo(clamp((now - nd.shownAt) / APPEAR)) : 0;
       const delay = (Math.hypot(gx - W / 2, gy - H / 2) / Math.hypot(W / 2, H / 2)) * 180;   // 가운데 칸부터 먼저 떠난다
       const m = releasedAt ? inOut(clamp((now - releasedAt - delay) / FLY)) : 0;
+      // 다 나간 뒤(m = 1)에는 아래 평소 계산으로 넘어간다 — 멀리 있어 보이지 않다가 다가오면서 나타난다
+      if (!nd.startVis && m > 0 && m < 1) {
+        // 가운데에서 바깥쪽으로, 점점 빨라지며 화면 밖까지 — 투명해지지 않는다
+        const dx = gx - W / 2, dy = gy - H / 2, len = Math.hypot(dx, dy) || 1;
+        const reach = Math.hypot(W, H) * 0.75;
+        const e = m * m;
+        const ox = gx + (dx / len) * reach * e, oy = gy + (dy / len) * reach * e;
+        el.style.visibility = 'visible';
+        el.style.opacity = '1';
+        el.style.filter = '';
+        el.style.zIndex = 60;
+        el.style.transform = `translate3d(${(ox - nd.w / 2).toFixed(1)}px, ${(oy - nd.hpx / 2).toFixed(1)}px, 0) scale(${(gs * (1 + 0.6 * e)).toFixed(4)})`;
+        return;
+      }
       const cx = lerp(gx, fx, m), cy = lerp(gy, fy, m) + (1 - a) * 8;
       const sc = lerp(gs, s, m);
       const op = lerp(a, fOp, m);
@@ -307,8 +323,8 @@ function headlineFrame() {
 /* ---------- 공개 범위 — Timeline(js/timeline.js)의 BUILD_UNTIL·BUILD_SKIP을 그대로 읽는다 ---------- */
 async function chapters() {
   const [src, data] = await Promise.all([
-    fetch('js/timeline.js?v=202611100954').then((r) => r.text()),
-    fetch('data/timeline.en.json?v=202611100954').then((r) => r.json()),
+    fetch('js/timeline.js?v=202611100956').then((r) => r.text()),
+    fetch('data/timeline.en.json?v=202611100956').then((r) => r.json()),
   ]);
   const until = (src.match(/const BUILD_UNTIL = '([^']+)'/) || [])[1];
   const skip = ((src.match(/const BUILD_SKIP = \[([^\]]*)\]/) || [])[1] || '').match(/'([^']+)'/g)?.map((s) => s.slice(1, -1)) || [];
