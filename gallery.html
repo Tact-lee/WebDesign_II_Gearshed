@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GEARSHED — Gallery</title>
+<meta name="description" content="Every model from the Timeline and Artists, at a glance." />
+<meta name="theme-color" content="#ece9e1" />
+<link rel="icon" href="data:," />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400..800&family=Instrument+Sans:wdth,wght@75..100,400..700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/gallery.css?v=202611170339" />
+</head>
+<body data-mode="flow">
+
+<a class="skip" href="#sorter">Skip to the arrangement controls</a>
+
+<header class="bar">
+  <a class="brand" href="./" aria-label="GEARSHED home">GEAR<span>SHED</span></a>
+  <nav class="bar-nav" aria-label="Sections">
+    <a href="timeline.html">Timeline</a>
+    <a href="artists.html">Artists</a>
+    <a href="gallery.html" aria-current="page">Gallery</a>
+  </nav>
+</header>
+
+<main>
+  <div class="title" id="title">
+    <h1>Gallery</h1>
+    <p>Every model, at a glance.</p>
+  </div>
+  <div class="stage" id="stage"></div>
+  <aside class="info" id="info" aria-live="polite"></aside>
+  <section class="src" id="src" hidden></section>
+</main>
+
+<footer class="foot">
+  <p class="copy"><small>© 2026 GEARSHED</small></p>
+  <nav class="sorter" id="sorter" aria-label="Arrange models">
+    <button type="button" data-mode="flow" aria-pressed="true">Flow</button>
+    <button type="button" data-mode="year" aria-pressed="false">Year</button>
+    <button type="button" data-mode="brand" aria-pressed="false">Brand</button>
+    <button type="button" data-mode="type" aria-pressed="false">Type</button>
+    <button type="button" data-mode="player" aria-pressed="false">Player</button>
+  </nav>
+  <a class="src-link" href="#sources">Sources</a>
+</footer>
+
+<noscript><p class="noscript">This page needs JavaScript to show the gallery.</p></noscript>
+<script type="module" src="js/gallery.js?v=202611170339"></script>
+</body>
+</html>

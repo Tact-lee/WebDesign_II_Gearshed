@@ -1,0 +1,219 @@
+/* =========================================================
+   GEARSHED — Gallery
+   Getty "Tracing Art"를 참고: 가운데 제목을 비워 두고 모델 사진이 깊이별 속도로 위로 흐른다.
+   아래 버튼(Year·Brand·Type·Player)을 누르면 같은 사진들이 그 자리에서 묶음으로 옮겨 가 정렬된다.
+   사진 위치·크기는 js/gallery.js가 매 프레임 준다. 토큰·서체·상단 바는 Artists와 같다.
+   ========================================================= */
+
+:root {
+  --cream: #ece9e1;
+  --cream-2: #e2ded3;
+  --cream-3: #d6d1c4;
+  --ink: #15130f;
+  --ink-2: #4b453c;
+  --ink-3: #6f675c;
+
+  --f-title: "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+  --f-sans: "Instrument Sans", var(--f-title);
+  --f-serif: "Instrument Serif", Georgia, serif;
+
+  --gutter: clamp(18px, 4vw, 72px);
+  --ease: cubic-bezier(.22, 1, .36, 1);
+}
+
+* { box-sizing: border-box; }
+html { -webkit-font-smoothing: antialiased; background: var(--cream); scrollbar-color: var(--ink-3) var(--cream); }
+body {
+  margin: 0; background: var(--cream); color: var(--ink);
+  font-family: var(--f-serif); font-size: 21px; line-height: 1.3;
+  /* 스크롤은 휠·터치·키를 JS가 받아 사진을 움직인다 — 문서 자체는 한 화면 */
+  overflow: hidden; height: 100vh; height: 100svh;
+}
+::selection { background: var(--ink); color: var(--cream); }
+a { color: inherit; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+a:focus-visible, button:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+img { display: block; max-width: 100%; }
+.noscript { padding: 120px var(--gutter); }
+
+.skip {
+  position: fixed; left: var(--gutter); top: 12px; z-index: 200;
+  padding: 10px 16px; background: var(--ink); color: var(--cream);
+  font: 600 13px/1 var(--f-title); text-decoration: none;
+  transform: translateY(-160%); transition: transform .2s var(--ease);
+}
+.skip:focus, .skip:focus-visible { transform: none; outline: 2px solid var(--cream); outline-offset: 2px; }
+
+/* ---------- 상단 바 — Artists와 같다 ---------- */
+.bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 60;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  padding: 18px var(--gutter);
+  font-family: var(--f-title); mix-blend-mode: difference; color: #fff;
+  pointer-events: none;
+}
+.bar > * { pointer-events: auto; }
+.brand { font-weight: 800; font-size: 19px; letter-spacing: -.02em; text-decoration: none; justify-self: start; }
+.brand span { opacity: .55; }
+.bar-nav { display: flex; gap: 22px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+.bar-nav a { text-decoration: none; opacity: .9; transition: opacity .25s; }
+.bar-nav a:hover, .bar-nav a[aria-current] { opacity: 1; text-decoration: underline; text-underline-offset: 5px; }
+
+/* ---------- 가운데 제목 — 흐름일 때만. 사진은 이 둘레를 비켜 간다 ---------- */
+.title {
+  position: fixed; left: 50%; top: 50%; z-index: 5; translate: -50% -50%;
+  display: grid; justify-items: center; gap: 14px; text-align: center; pointer-events: none;
+  transition: opacity .6s var(--ease), filter .6s var(--ease), scale .6s var(--ease);
+}
+.title h1 {
+  margin: 0; white-space: nowrap;
+  font: 700 clamp(72px, 13vw, 250px)/.8 var(--f-sans); font-stretch: 80%; letter-spacing: -.025em; text-transform: uppercase;
+}
+.title p { margin: 0; font-size: clamp(20px, 1.6vw, 28px); line-height: 1.2; }
+body:not([data-mode="flow"]) .title,
+body.is-open .title { opacity: 0; filter: blur(8px); scale: .96; }
+
+/* ---------- 사진 ---------- */
+.stage { position: fixed; inset: 0; z-index: 2; touch-action: none; }
+.tile {
+  position: absolute; left: 0; top: 0; display: block; color: var(--ink); text-decoration: none;
+  will-change: transform, opacity;
+}
+.tile img {
+  width: 100%; height: 100%; object-fit: cover; -webkit-user-drag: none; user-select: none;
+  opacity: 0; transition: opacity .6s var(--ease), scale .5s var(--ease);
+}
+.tile img.is-in { opacity: 1; }
+/* 가리키면 살짝 커진다 */
+.tile:hover, .tile:focus-visible { z-index: 3; }
+.tile:hover img, .tile:focus-visible img { scale: 1.06; }
+
+/* 옅은 박스 — 흐름에서 대부분의 사진은 바탕보다 한 톤 짙은 칸으로 지나가고, 가리키면 원래 사진이 드러난다 */
+body[data-mode="flow"]:not(.is-open) .tile.is-ghost {
+  background: var(--cream-2); transition: background-color .5s var(--ease);
+}
+body[data-mode="flow"]:not(.is-open) .tile.is-ghost img.is-in { opacity: .045; filter: grayscale(1); transition: opacity .5s var(--ease), filter .5s var(--ease), scale .5s var(--ease); }
+body[data-mode="flow"]:not(.is-open) .tile.is-ghost:hover,
+body[data-mode="flow"]:not(.is-open) .tile.is-ghost:focus-visible { background: transparent; }
+body[data-mode="flow"]:not(.is-open) .tile.is-ghost:hover img,
+body[data-mode="flow"]:not(.is-open) .tile.is-ghost:focus-visible img { opacity: 1; filter: none; }
+.tile.is-off { pointer-events: none; }
+.tile:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+
+/* 이름 — 흐름에서는 가리킬 때만, 정렬하면 모두 보인다 */
+.t-cap {
+  position: absolute; left: 0; top: 100%; padding-top: 9px;
+  display: flex; align-items: baseline; gap: 8px; white-space: nowrap;
+  opacity: 0; translate: 0 -4px; transition: opacity .3s var(--ease), translate .3s var(--ease);
+  pointer-events: none;
+}
+.t-cap b { font: 700 15px/1 var(--f-sans); font-stretch: 80%; letter-spacing: .01em; text-transform: uppercase; }
+.t-cap span { font: 600 11px/1 var(--f-title); letter-spacing: .06em; font-variant-numeric: tabular-nums; color: var(--ink-3); }
+.tile:hover .t-cap, .tile:focus-visible .t-cap,
+body:not([data-mode="flow"]) .t-cap { opacity: 1; translate: 0 0; }
+body.is-open .t-cap { opacity: 0; }
+body[data-mode="flow"] .t-cap span { display: none; } /* 흐름에서 가리킬 때는 이름만 */
+body[data-mode="flow"] .t-cap { padding-top: 13px; }  /* 커진 사진에 이름이 붙지 않게 */
+
+/* 정렬 묶음 이름 */
+.glabel {
+  position: absolute; left: 0; top: 0; z-index: 3; margin: 0; display: grid; gap: 8px;
+  will-change: transform, opacity; transition: opacity .5s var(--ease);
+}
+.glabel b { text-wrap: balance; font: 700 clamp(40px, 4.2vw, 84px)/.84 var(--f-sans); font-stretch: 80%; letter-spacing: -.02em; text-transform: uppercase; }
+.glabel span { font: 600 12px/1 var(--f-title); letter-spacing: .08em; text-transform: uppercase; font-variant-numeric: tabular-nums; color: var(--ink-3); }
+.glabel b i { font-style: normal; text-transform: none; } /* 1950s의 s */
+body.is-open .glabel { opacity: 0 !important; }
+/* 정렬 화면은 위아래 글자 줄 밑으로 사진이 지나가므로 가장자리를 흐린다 */
+body:not([data-mode="flow"]) .stage {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 96px, #000 calc(100% - 84px), transparent);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 96px, #000 calc(100% - 84px), transparent);
+}
+
+/* ---------- 한 모델 크게 ---------- */
+.info {
+  position: fixed; z-index: 6; left: 55vw; right: var(--gutter); top: 50%; translate: 0 -50%;
+  opacity: 0; visibility: hidden; transition: opacity .5s var(--ease), visibility 0s .5s;
+}
+body.is-open .info { opacity: 1; visibility: visible; transition: opacity .7s .15s var(--ease), visibility 0s; }
+.i-name {
+  margin: 0 0 clamp(28px, 5vh, 56px); text-wrap: balance;
+  font: 700 clamp(52px, 6.2vw, 128px)/.84 var(--f-sans); font-stretch: 80%; letter-spacing: -.025em; text-transform: uppercase;
+}
+.i-meta { margin: 0; max-width: 34ch; }
+.i-meta div { display: flex; justify-content: space-between; gap: 24px; padding: 8px 0; border-top: 1px solid var(--cream-3); }
+.i-meta div:last-child { border-bottom: 1px solid var(--cream-3); }
+.i-meta dt { font: 600 11px/1.9 var(--f-title); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.i-meta dd { margin: 0; text-align: right; font-size: 21px; line-height: 1.2; }
+.i-meta a { text-decoration-color: var(--cream-3); }
+.i-meta a:hover { text-decoration-color: currentColor; }
+.i-credit { margin: 18px 0 0; max-width: 46ch; font: 400 12px/1.5 var(--f-title); color: var(--ink-2); }
+.i-credit a { text-decoration-color: var(--cream-3); text-underline-offset: 3px; }
+.i-credit a:hover { text-decoration-color: currentColor; }
+.i-nav {
+  margin: clamp(28px, 5vh, 52px) 0 0; display: flex; gap: 28px;
+  font: 600 12px/1 var(--f-title); letter-spacing: .08em; text-transform: uppercase;
+}
+.i-nav a { text-decoration: none; }
+.i-nav a:hover { text-decoration: underline; }
+
+/* ---------- 아래 줄 — 왼쪽 저작권, 가운데 정렬 버튼, 오른쪽 출처 ---------- */
+.foot {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  padding: 0 var(--gutter) 20px;
+  font: 600 12px/1 var(--f-title); letter-spacing: .08em; text-transform: uppercase;
+  mix-blend-mode: difference; color: #fff;
+}
+.copy { margin: 0; letter-spacing: .02em; text-transform: none; }
+.copy small { font-size: inherit; }
+.sorter { display: flex; gap: 6px; }
+.sorter button {
+  appearance: none; border: 0; background: none; color: inherit; cursor: pointer;
+  padding: 8px 10px; font: inherit; letter-spacing: inherit; text-transform: inherit; opacity: .6;
+  transition: opacity .25s;
+}
+.sorter button:hover { opacity: 1; }
+.sorter button[aria-pressed="true"] { opacity: 1; text-decoration: underline; text-underline-offset: 5px; }
+.src-link { justify-self: end; text-decoration: none; }
+.src-link:hover { text-decoration: underline; text-underline-offset: 5px; }
+body.is-open .foot .sorter { opacity: .35; pointer-events: none; }
+body.is-src .foot { display: none; }
+
+/* ---------- 출처 ---------- */
+.src {
+  position: fixed; inset: 0; z-index: 50; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--cream); padding: 120px var(--gutter) 96px; font-family: var(--f-title);
+}
+.src h2 { margin: 0 0 12px; font: 700 clamp(40px, 5vw, 96px)/.9 var(--f-sans); font-stretch: 80%; text-transform: uppercase; }
+.src > p { margin: 0 0 40px; max-width: 70ch; font: 400 13px/1.5 var(--f-title); color: var(--ink-2); }
+.src ol { margin: 0; padding: 0; list-style: none; max-width: 110ch; }
+.src li { display: grid; grid-template-columns: minmax(150px, 22ch) 1fr; gap: 24px; padding: 6px 0; border-top: 1px solid var(--cream-3); font-size: 13px; line-height: 1.45; color: var(--ink-2); }
+.src li b { font-weight: 600; color: var(--ink); }
+.src li a { overflow-wrap: anywhere; text-decoration-color: var(--cream-3); text-underline-offset: 3px; }
+.src li a:hover { text-decoration-color: currentColor; }
+.src .back { display: inline-block; margin-top: 40px; font: 600 12px/1 var(--f-title); letter-spacing: .08em; text-transform: uppercase; }
+
+/* ---------- 좁은 화면 — 최소한만. 모바일 정리는 마지막에 ---------- */
+@media (max-width: 760px) {
+  .bar { grid-template-columns: auto 1fr; }
+  .bar-nav { justify-self: end; gap: 14px; font-size: 11px; }
+  .title h1 { font-size: 24vw; }
+  .title p { font-size: 19px; }
+  .t-cap b { font-size: 13px; }
+  .info { left: var(--gutter); top: calc(76px + 44svh + 28px); translate: 0 0; }
+  .i-name { font-size: 14vw; margin-bottom: 20px; }
+  .i-meta dd { font-size: 18px; }
+  .foot { grid-template-columns: 1fr auto; row-gap: 4px; padding-bottom: 12px; }
+  .copy { display: none; }
+  .sorter { gap: 0; margin-left: -10px; }
+  .sorter button { padding: 8px 7px; font-size: 11px; }
+  .src li { grid-template-columns: 1fr; gap: 2px; }
+  body.is-open .foot { opacity: 0; pointer-events: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title, .info, .t-cap, .glabel { transition: none; }
+}
+
+/* 흐름에서 진짜 사진은 박스 위에 */
+body[data-mode="flow"] .tile:not(.is-ghost) { z-index: 1; }

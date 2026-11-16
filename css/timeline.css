@@ -1981,3 +1981,28 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible { outline: 
 #ch-broadcaster .m3-year, #ch-stratocaster .m3-year, #ch-gibson-sg .m3-year, #ch-les-paul-standard .m3-year { font-size: min(var(--yfs), 20vw); z-index: -1; }
 
 /* 진행선의 시대 눈금 — 연대가 바뀌는 자리에 선을 가로지르는 짧은 가로선(연대 이름은 펼친 목록의 연도가 대신한다) */
+
+/* Marshall 1959 Super Lead: the whole head sits on the right with the title to its left (unlike the JTM45 pushed in from the left and the rising Twin);
+   the stage shows the back of the head on the left with the text on the right. */
+:root[lang] #ch-marshall-super-lead .block p { font-size:21px;line-height:1.45; }
+#ch-marshall-super-lead .block p + p { margin-top:1em; }
+#ch-marshall-super-lead .gl-txt { max-width:calc(100vw - 2 * var(--gutter)); }
+@media(min-width:901px) {
+/* the head is pushed in from the right edge with its right part off-screen (mirror of the JTM45); title and year sit in the left half on one bottom line */
+#ch-marshall-super-lead .ch-head.has-entry--half { --ar:2.3322;--vis:calc(var(--eh) * var(--ar) * .7);--tl:12vw;
+  --yfs:clamp(200px, min(38vw, calc((100vw - var(--vis) - var(--tl) - 3vw) / 2.2)), 600px); }
+#ch-marshall-super-lead .ch-entry.ch-entry--half img { left:calc(100vw - var(--vis));top:30svh;
+  transform:translate3d(calc((1 - var(--p,0)) * (var(--vis) + 8vw)),0,0); }
+#ch-marshall-super-lead .ch-head.has-entry--half h2, #ch-marshall-super-lead .ch-head.has-entry--half .ch-meta { left:var(--tl);right:auto;text-align:left;justify-content:flex-start; }
+#ch-marshall-super-lead .ch-head.has-entry--half .ch-bgyear--in { left:calc(var(--tl) - .03em);right:auto;bottom:calc(var(--tb) + var(--h2s) * .11 - var(--yfs) * .035); }
+ #ch-marshall-super-lead .hx-panel.hx-photohalf .hx-text { width:clamp(425px,25vw,560px);max-width:none;padding:0;box-sizing:border-box;justify-self:center;margin:0; }
+ #ch-marshall-super-lead .hx-panel.hx-photohalf .block { width:100%;max-width:none; }
+ #ch-marshall-super-lead .stage--whole .stage-tl { filter:drop-shadow(0 2svh 2.6svh rgba(21,19,15,.26));height:min(34svh,19vw);top:calc(50svh - min(34svh,19vw) / 2);bottom:auto;left:5vw;right:auto;transform:translate3d(calc((1 - var(--s1,0)) * -70vw + var(--x,0) * -100vw),0,0); }
+ #ch-marshall-super-lead .hero-steps { max-width:none; }
+ #ch-marshall-super-lead .hero-step { justify-items:end;text-align:left;padding-right:9vw; }
+ #ch-marshall-super-lead .ch-head.has-entry--half ~ .hero-wrap .hero-step .block { width:clamp(425px,27vw,580px);max-width:none; }
+ #ch-marshall-super-lead .hx-panel.hx-fullphoto .hx-text { position:absolute;top:auto;bottom:12svh;right:4vw;left:auto;margin:0;width:clamp(380px,23vw,460px);max-width:none; }
+ #ch-marshall-super-lead .hx-fullphoto .hx-dim { background:linear-gradient(90deg,rgba(0,0,0,0) 55%,rgba(0,0,0,.78) 74%); }
+}
+#ch-marshall-super-lead .hx-fullphoto .block { color:#f2efe8; }
+@media(max-width:900px) { :root[lang] #ch-marshall-super-lead .block p { font-size:18px; } }
