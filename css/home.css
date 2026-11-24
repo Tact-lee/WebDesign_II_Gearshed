@@ -140,6 +140,9 @@ body.is-booting .cue { opacity: 0; }
   position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden;
   background: var(--night); color: var(--paper);
 }
+/* 사진 전체가 링크 — 누르면 그 페이지로 */
+.panel-link { position: absolute; inset: 0; z-index: 3; cursor: pointer; }
+.panel-link:focus-visible { outline: 2px solid var(--paper); outline-offset: -8px; }
 .panel-img {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;
   transform: scale(var(--ps, 1.08)); transform-origin: 50% 60%;
@@ -157,20 +160,9 @@ body.is-booting .cue { opacity: 0; }
   font: 800 clamp(72px, 12vw, 220px)/.86 var(--f-title); letter-spacing: -.05em;
 }
 .panel-desc { margin: 0; max-width: 30ch; font-size: 21px; line-height: 1.32; color: rgba(242, 239, 232, .88); }
-.panel-row { margin: 0; display: flex; align-items: center; gap: 36px; justify-self: end; }
-.panel-meta { font: 600 12px/1 var(--f-title); letter-spacing: .08em; text-transform: uppercase; font-variant-numeric: tabular-nums; color: rgba(242, 239, 232, .72); white-space: nowrap; }
-.panel-go {
-  position: relative; display: inline-flex; align-items: center; gap: 14px; padding: 14px 0;
-  font: 700 15px/1 var(--f-title); text-decoration: none; color: var(--paper); white-space: nowrap;
-}
-.panel-go svg { width: 24px; height: 12px; transition: transform .35s var(--ease); }
-.panel-go::after {
   content: ""; position: absolute; left: 0; right: 38px; bottom: 8px; height: 1px; background: currentColor;
   transform: scaleX(0); transform-origin: left; transition: transform .45s var(--ease);
 }
-.panel-go:hover::after, .panel-go:focus-visible::after { transform: scaleX(1); }
-.panel-go:hover svg { transform: translateX(5px); }
-.panel-go:active { transform: translateY(1px); }
 
 .foot { position: relative; z-index: 2; padding: 28px var(--gutter) 34px; background: var(--cream); }
 .foot p { margin: 0; max-width: 100ch; font: 400 12px/1.55 var(--f-title); color: var(--ink-3); }
@@ -185,7 +177,6 @@ body.is-booting .cue { opacity: 0; }
   .hero { width: calc(100vw - 2 * var(--gutter)); }
   .hero h1 { font-size: clamp(30px, 10.4vw, 52px); line-height: .92; }
   .panel-body { grid-template-columns: 1fr; row-gap: 22px; }
-  .panel-row { justify-self: start; flex-wrap: wrap; gap: 8px 24px; }
 }
 
 /* ---------- 움직임 줄이기 — 다가오는 장면과 넘기기 없이 바뀐다 ---------- */

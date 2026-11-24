@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GEARSHED — Signal Chain</title>
+<meta name="description" content="Pick a guitar, put pedals on the cable and choose an amp. The line between them draws the sound at each stage." />
+<meta name="theme-color" content="#ece9e1" />
+<link rel="icon" href="data:," />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400..800&family=Instrument+Sans:wdth,wght@75..100,400..700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/signal.css?v=202611240952" />
+</head>
+<body>
+
+<a class="skip" href="#rig">Skip to the signal chain</a>
+
+<header class="bar">
+  <a class="brand" href="./" aria-label="GEARSHED home">GEAR<span>SHED</span></a>
+  <nav class="bar-nav" aria-label="Sections">
+    <a href="timeline.html">Timeline</a>
+    <a href="artists.html">Artists</a>
+    <a href="gallery.html">Gallery</a>
+    <a href="signal.html" aria-current="page">Signal</a>
+  </nav>
+</header>
+
+<main id="rig" tabindex="-1">
+  <div class="head">
+    <h1>Signal Chain</h1>
+    <p class="lede">Pick a guitar, put pedals on the cable and choose an amp. The line between them is the sound itself, drawn as it leaves each box.</p>
+  </div>
+
+  <div class="transport">
+    <button class="play" type="button" aria-pressed="false">
+      <svg class="ico ico-play" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 3.5v13l11-6.5z" /></svg>
+      <svg class="ico ico-stop" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 4h3.6v12H5zM11.4 4H15v12h-3.6z" /></svg>
+      <span class="play-txt">Play</span>
+    </button>
+    <label class="vol"><span>Volume</span><input type="range" min="0" max="1" step="0.01" value="0.5" /></label>
+  </div>
+
+  <section class="stage" aria-label="The chain">
+    <canvas class="wire" aria-hidden="true"></canvas>
+    <figure class="slot slot-guitar"><img src="assets/signal/gear/es-335.png" alt="Gibson ES-335" draggable="false" /><figcaption></figcaption></figure>
+    <ol class="board" aria-label="Pedals on the cable, in signal order"></ol>
+    <figure class="slot slot-amp"><img src="assets/signal/gear/vox-ac30.png" alt="Vox AC30/6" draggable="false" /><figcaption></figcaption></figure>
+  </section>
+
+  <section class="shelf" aria-label="Gear">
+    <div class="group g-guitars">
+      <h2>Guitar</h2>
+      <div class="items" role="radiogroup" aria-label="Guitar"></div>
+    </div>
+    <div class="group g-pedals">
+      <h2>Pedals</h2>
+      <div class="items"></div>
+    </div>
+    <div class="group g-amps">
+      <h2>Amp</h2>
+      <div class="items" role="radiogroup" aria-label="Amp"></div>
+    </div>
+  </section>
+
+  <p class="sr-only" aria-live="polite" id="say"></p>
+</main>
+
+<footer class="sources" aria-labelledby="src-h">
+  <h2 id="src-h">Sources</h2>
+  <div class="cols">
+    <div>
+      <h3>Recordings</h3>
+      <p>Each guitar plays one dry loop from <a href="https://www.looperman.com/">Looperman</a>. The loops were not recorded on the guitars shown.</p>
+      <ul>
+        <li>Gibson ES-150: Electric Guitar 51, Flask, <a href="https://www.looperman.com/loops/detail/381240">looperman.com</a></li>
+        <li>Gibson ES-175: Lilly, Chukwudozie, <a href="https://www.looperman.com/loops/detail/400907">looperman.com</a></li>
+        <li>Gibson Les Paul Goldtop: Dry Indie Style Guitar Chords, Johnny808, <a href="https://www.looperman.com/loops/detail/217586">looperman.com</a></li>
+        <li>Gretsch 6120: Electric Guitar 47, Flask, <a href="https://www.looperman.com/loops/detail/374262">looperman.com</a></li>
+        <li>Gibson ES-335: Rnb Guitar 53, Flask, <a href="https://www.looperman.com/loops/detail/370895">looperman.com</a></li>
+        <li>PRS Custom 24: Poppy Field, Simple Electric, Djquintxn, <a href="https://www.looperman.com/loops/detail/434215">looperman.com</a></li>
+        <li>Strandberg Boden: Indie Emo Electric Guitar Chords Dry, Johnny808, <a href="https://www.looperman.com/loops/detail/228135">looperman.com</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3>Sound</h3>
+      <p>The pedals, amplifiers and speaker cabinets are built in the browser from Web Audio filters, wave shapers and delays, with fixed settings. They are approximations, not recordings of the originals. Each cabinet is an impulse response calculated from a speaker curve.</p>
+      <h3>Images</h3>
+      <p>Photographs of the guitars, pedals and amplifiers are the ones used in the <a href="timeline.html#sources">Timeline</a>, where each is credited.</p>
+    </div>
+  </div>
+  <p class="copy">© 2026 GEARSHED</p>
+</footer>
+
+<noscript><p class="noscript">This page needs JavaScript to play sound.</p></noscript>
+<script type="module" src="js/signal.js?v=202611240952"></script>
+</body>
+</html>

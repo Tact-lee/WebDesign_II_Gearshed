@@ -94,7 +94,8 @@ const tiles = MODELS.flatMap((m) => [true, false].map((primary) => {
   if (im.complete) show(); else { im.addEventListener('load', show); im.addEventListener('error', show); }
   return {
     m, el, primary, x: 0, y: 0, w: 0, o: 0,
-    size: 0.6 + 1.05 * Math.random() ** 1.4, // 크기 배수 — 작은 사진이 많고 큰 사진이 가끔
+    size: 0.8 + 0.45 * Math.random(), // 같은 겹 안의 크기 차이 — 큰 차이는 겹(LAYERS)이 만든다
+    layer: 1,
     ghost: false,
     rate: 2.4 + Math.random() * 2.6, // 정렬할 때 옮겨 가는 빠르기 — 사진마다 달라 유기적으로 보인다
   };
@@ -102,6 +103,20 @@ const tiles = MODELS.flatMap((m) => [true, false].map((primary) => {
 const twin = (t) => tiles[tiles.indexOf(t) + (t.primary ? 1 : -1)];
 
 const setGhost = (t, g) => { t.ghost = g; t.el.classList.toggle('is-ghost', g); };
+// 다시 고를 때 — 이미 보이는 다른 사진과 겹치는 자리면 회색 박스로 남는다(사진끼리 포개지지 않게)
+const hitsReal = (t) => tiles.some((o) => o !== t && !o.ghost && o.o > 0.5
+  && t.x < o.x + o.w && o.x < t.x + t.w && t.y < o.y + o.w / o.m.ar && o.y < t.y + t.w / t.m.ar);
+// 화면 밖에서만 고른다(보이는 동안에는 바뀌지 않는다). 최근에 사진으로 지나간 모델은 한동안 박스로, 오래 안 보인 모델은 사진이 되기 쉽게 — 계속 흘러도 같은 사진만 되풀이되지 않는다
+let rollN = 0;
+const lastReal = {};
+const roll = (t) => {
+  rollN++;
+  const since = rollN - (lastReal[t.m.id] ?? -1e9);
+  const pReal = since < 24 ? 0.06 : since < 60 ? 1 - FLOW.ghost : 0.62;
+  const real = Math.random() < pReal && !hitsReal(t);
+  if (real) lastReal[t.m.id] = rollN;
+  setGhost(t, !real);
+};
 
 let mode = 'flow';
 let openId = null;
@@ -114,8 +129,15 @@ let vw = innerWidth, vh = innerHeight, narrow = vw < 760;
 
 /* 흐름 — Getty "the World of the GPI"처럼: 화면 아래 바깥의 소실점에서 사진이 올라오며 점점 커지고 바깥으로 퍼진다(원근).
    가운데 제목 둘레는 타원으로 비워 두되, 화면 전체의 사진이 제목에서 멀수록 덜, 가까울수록 더 밀려난다. */
-// 소실점 높이(화면 높이 배수) · 초당 흐름(한 화면=1) · 겹침 검사 횟수 · 옅은 박스로 지나가는 비율(가리키면 사진이 드러난다)
-const FLOW = { vp: 2.6, speed: 0.028, samples: 48, ghost: 0.7 };
+// 소실점 높이(화면 높이 배수) · 초당 흐름(한 화면=1) · 겹침 검사 횟수 · 회색 박스로 지나가는 비율(가리키면 사진이 드러난다)
+const FLOW = { vp: 2.6, speed: 0.028, samples: 48, ghost: 0.6 };
+// 깊이 — 먼 겹은 작고 느리게, 가까운 겹은 크고 빠르게(Getty처럼 겹마다 속도가 달라 깊이가 느껴진다). share: 사진이 그 겹에 놓일 비율
+// sway: 마우스가 화면 끝에 있을 때 그 겹이 커서 반대쪽으로 비켜나는 거리(px)
+const LAYERS = [
+  { speed: 0.6, scale: 0.66, share: 0.4, sway: 10 },
+  { speed: 1, scale: 1, share: 0.35, sway: 20 },
+  { speed: 1.5, scale: 1.38, share: 0.25, sway: 34 },
+];
 let F = null;
 
 // 흐름 위치 p(0=화면 아래 바깥, 1=화면 위 바깥)에서 사진의 화면 사각형
@@ -123,13 +145,15 @@ function flowAt(t, p) {
   const s = 1 / (F.qIn - F.dq * p);
   const sc = s / F.sMid;                      // 화면 가운데 높이에서 1
   const w = t.w0 * sc, h = w / t.m.ar;
-  let x = vw / 2 + t.u * sc, y = F.VPy - s;   // 사진 가운데
-  // 제목 타원 바깥으로 — r을 (r⁴+1)^¼로: 가운데는 타원 테두리까지, 멀어질수록 거의 그대로
-  const ax = F.tw + w / 2, ay = F.th + h / 2;
-  const dx = (x - F.cx) / ax, dy = (y - F.cy) / ay;
+  // 사진 가운데. 위로 갈수록 바깥으로 퍼지는 원근은 약하게(크기는 그대로 커진다)
+  let x = vw / 2 + t.u * (1 + (sc - 1) * 0.3), y = F.VPy - s;
+  // 제목 둘레 — 눈(아몬드) 모양: 아래에서 올라오며 제목 높이에서 제목 가장자리까지 벌어지고, 지나가면 다시 원래 줄로 모인다.
+  // 세로로 긴 타원으로 가로 방향만 민다. r을 (rⁿ+1)^(1/n)로 — 제목 높이에서 정확히 가장자리, 위아래로 갈수록 0
+  // 제목 글자 높이(사진 절반 포함) 안에서는 끝까지 밀어 두고, 그 위아래로 ay에 걸쳐 원래 줄로 돌아온다
+  const ax = F.tw + w / 2, ay = vh * 0.5;
+  const dx = (x - F.cx) / ax, dy = Math.max(0, Math.abs(y - F.cy) - F.th - h / 2) / ay;
   const r = Math.hypot(dx, dy) || 1e-4;
-  const k = Math.pow(r ** 4 + 1, 0.25) / r;
-  x = F.cx + dx * k * ax; y = F.cy + dy * k * ay;
+  x = F.cx + dx * (Math.pow(r ** 2.6 + 1, 1 / 2.6) / r) * ax;
   return { x: x - w / 2, y: y - h / 2, w, h };
 }
 const sampleRects = (t) => Array.from({ length: FLOW.samples }, (_, i) => {
@@ -150,17 +174,20 @@ function layoutFlow() {
   F = {
     VPy, qIn: 1 / sIn, dq: 1 / sIn - 1 / sOut, sMid: VPy - vh / 2, P: 2.1,
     cx: (titleBox.left + titleBox.right) / 2, cy: (titleBox.top + titleBox.bottom) / 2,
-    tw: ((titleBox.right - titleBox.left) / 2) * 1.08, th: ((titleBox.bottom - titleBox.top) / 2) * 1.3,
+    tw: ((titleBox.right - titleBox.left) / 2) * 0.98, th: ((titleBox.bottom - titleBox.top) / 2) * 1.05,
   };
   // 크기 — 넓이가 비슷하게(가로/세로 비율 보정) 한 뒤 사진마다 크기 배수를 곱한다
-  const B = narrow ? vw * 0.22 : clamp(vw * 0.08, 104, 210);
+  const B = narrow ? vw * 0.22 : clamp(vw * 0.085, 110, 220);
   for (const t of tiles) {
-    t.w0 = B * t.size * Math.sqrt(t.m.ar);
+    if (t.primary) { const r = Math.random(); t.layer = r < LAYERS[0].share ? 0 : r < LAYERS[0].share + LAYERS[1].share ? 1 : 2; }
+    else t.layer = twin(t).layer; // 둘째 사진은 첫째와 같은 겹(같은 속도라야 한 바퀴 정반대 자리가 유지된다)
+    t.el.dataset.layer = t.layer;
+    t.w0 = B * t.size * LAYERS[t.layer].scale * Math.sqrt(t.m.ar);
     const hMax = vh * (narrow ? 0.3 : 0.44);
     if (t.w0 / t.m.ar > hMax) t.w0 = hMax * t.m.ar;
   }
-  // 큰 사진부터, 한 바퀴 도는 동안 다른 사진과 한 번도 겹치지 않는 자리를 찾는다
-  const gap = 0.2, uMax = vw * 0.56, uMin = narrow ? 0 : F.tw * 0.55;
+  // 큰 사진부터, 한 바퀴 도는 동안 같은 겹의 다른 사진과 겹치지 않는 자리를 찾는다(다른 겹끼리는 앞뒤로 지나간다)
+  const gap = 0.2, uMax = vw * 0.56, uMin = narrow ? 0 : F.tw * 0.25; // 정가운데 줄만 뺀다(제목 앞에서 좌우 어느 쪽으로 갈지 갈리지 않게)
   const area = (t) => t.w0 * t.w0 / t.m.ar;
   const order = tiles.filter((t) => t.primary).sort((a, b) => area(twin(b)) + area(b) - area(twin(a)) - area(a));
   const lane = () => (Math.random() < 0.5 ? -1 : 1) * (uMin + Math.random() * (uMax - uMin));
@@ -174,10 +201,10 @@ function layoutFlow() {
         t.u = lane(); d.u = lane();
         t.p0 = Math.random() * F.P; d.p0 = mod(t.p0 + F.P / 2, F.P);
         const a = sampleRects(t), b = sampleRects(d);
-        if (!hits(a, b, gap) && !placed.some((o) => hits(o, a, gap) || hits(o, b, gap))) rs = [a, b];
+        if (!hits(a, b, gap) && !placed.some((o) => o.L === t.layer && (hits(o.rs, a, gap) || hits(o.rs, b, gap)))) rs = [a, b];
       }
       if (!rs) { if (attempt < 5) { ok = false; break; } rs = [sampleRects(t), sampleRects(d)]; }
-      placed.push(...rs);
+      placed.push({ L: t.layer, rs: rs[0] }, { L: t.layer, rs: rs[1] });
     }
     if (ok) break;
     F.P *= 1.15; // 자리가 모자라면 흐름 한 바퀴를 늘린다(한 화면에 보이는 사진이 줄어든다)
@@ -185,10 +212,20 @@ function layoutFlow() {
 }
 
 function flowTarget(t) {
-  const p = mod(t.p0 + flowC, F.P);
+  const p = mod(t.p0 + flowC * LAYERS[t.layer].speed, F.P);
   const r = flowAt(t, p < 1 ? p : 0); // 한 바퀴의 나머지 동안은 화면 아래 바깥에서 기다린다
-  return { x: r.x, y: r.y, w: r.w, o: p < 1 ? 1 : 0 };
+  const sw = LAYERS[t.layer].sway;
+  return { x: r.x - sway.x * sw, y: r.y - sway.y * sw * 0.6, w: r.w, o: p < 1 ? 1 : 0 };
 }
+
+// 마우스 — 화면 가운데에서 얼마나 떨어졌는지(-1~1)를 천천히 따라간다. 터치·움직임 줄이기에서는 쓰지 않는다
+const sway = { x: 0, y: 0, tx: 0, ty: 0 };
+if (!reduce) addEventListener('pointermove', (e) => {
+  if (e.pointerType !== 'mouse') return;
+  sway.tx = clamp((e.clientX / vw) * 2 - 1, -1, 1);
+  sway.ty = clamp((e.clientY / vh) * 2 - 1, -1, 1);
+}, { passive: true });
+document.documentElement.addEventListener('pointerleave', () => { sway.tx = sway.ty = 0; });
 
 /* 정렬 — 왼쪽에 묶음 이름, 오른쪽에 높이가 같은 사진이 같은 간격으로 줄 바꿈 */
 let groupPos = new Map();
@@ -244,8 +281,27 @@ function openTarget(t) {
   return { x, y, w, o: 1 };
 }
 
+/* 정렬을 바꿀 때 — Getty처럼 사진이 먼저 가운데에 구(공) 모양으로 모여 천천히 돈 뒤, 새 배열로 펼쳐진다 */
+const GATHER = 1300;  // 구로 모여 있는 시간(ms)
+const SPREAD = 1600;  // 펼쳐지는 동안은 사진마다 다른 빠르기(t.rate)로
+let gatherEnd = 0, gathering = false;
+// 피보나치 구 — 사진이 고르게 퍼지고, 반지름을 조금씩 달리해 속이 찬 공처럼
+tiles.forEach((t, i) => {
+  t.sph = { th: i * 2.39996, ph: Math.acos(1 - (2 * (i + 0.5)) / tiles.length), r: 0.62 + 0.38 * Math.random() };
+});
+function sphereTarget(t) {
+  const R = Math.min(vw, vh) * (narrow ? 0.4 : 0.3);
+  const a = t.sph.th + performance.now() * 0.0006;    // 세로축으로 천천히 돈다
+  const rr = R * t.sph.r, sp = Math.sin(t.sph.ph);
+  const x3 = rr * sp * Math.cos(a), z3 = rr * sp * Math.sin(a), y3 = rr * Math.cos(t.sph.ph);
+  const depth = (z3 / R + 1) / 2;                       // 0 = 뒤, 1 = 앞
+  const w = R * 0.19 * (0.65 + 0.55 * depth) * Math.sqrt(t.m.ar);
+  return { x: vw / 2 + x3 - w / 2, y: vh / 2 + y3 - w / t.m.ar / 2, w, o: 0.28 + 0.72 * depth, z: 10 + Math.round(depth * 20) };
+}
+
 function target(t) {
   if (openId === t.m.id && t.primary) return openTarget(t);
+  if (gathering) return sphereTarget(t);
   let p;
   if (mode === 'flow') p = flowTarget(t);
   else {
@@ -274,14 +330,19 @@ function frame(now = performance.now(), snap = false) {
   if (mode === 'flow' && !openId && !reduce) flowT += FLOW.speed * (1 - hover) * dt;
   flowC += (flowT - flowC) * k(6);
   scrollC += (scrollT - scrollC) * k(7);
+  sway.x += (sway.tx - sway.x) * k(2.5);
+  sway.y += (sway.ty - sway.y) * k(2.5);
+  const g = now < gatherEnd;
+  if (g !== gathering) { gathering = g; document.body.classList.toggle('is-gather', g); }
+  const spreading = now < gatherEnd + SPREAD;
   for (const t of tiles) {
     const p = target(t);
-    const kk = k(mode === 'flow' && !openId ? 9 : t.rate);
+    const kk = k(gathering ? Math.max(t.rate, 5) : mode === 'flow' && !openId && !spreading ? 9 : t.rate);
     // 줄 끝에서 위로 넘어간 사진은 아래에서 바로 다시 나타난다(따라가며 화면을 가로지르지 않게)
-    const inFlow = mode === 'flow' && !openId;
+    const inFlow = mode === 'flow' && !openId && !gathering;
     if (inFlow && t.pt && Math.abs(p.y - t.pt.y) > vh * 0.6) {
       t.x += p.x - t.pt.x; t.y += p.y - t.pt.y; t.w += p.w - t.pt.w;
-      setGhost(t, Math.random() < FLOW.ghost); // 한 바퀴 돌 때마다 박스·사진을 새로 정한다
+      roll(t); // 한 바퀴 돌 때마다 박스·사진을 새로 정한다
     }
     t.pt = inFlow ? p : null;
     t.x += (p.x - t.x) * kk;
@@ -293,7 +354,7 @@ function frame(now = performance.now(), snap = false) {
     t.el.style.height = `${(t.w / t.m.ar).toFixed(1)}px`;
     t.el.style.opacity = t.o.toFixed(3);
     t.el.classList.toggle('is-off', p.o < 0.5);
-    t.el.style.zIndex = openId === t.m.id && t.primary ? 4 : '';
+    t.el.style.zIndex = openId === t.m.id && t.primary ? 40 : gathering ? p.z : mode === 'flow' ? 1 + t.layer + (t.ghost ? 0 : 3) : ''; // 사진은 박스 위, 그 안에서는 가까운 겹이 위
   }
   for (const l of labels) l.el.style.transform = `translate3d(${l.x}px,${(l.y - scrollC).toFixed(1)}px,0)`;
 }
@@ -363,6 +424,7 @@ function setMode(m) {
   sorter.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
   scrollT = scrollC = 0;
   layoutGroups();
+  if (!reduce && !document.hidden) gatherEnd = performance.now() + GATHER;
   if (document.hidden) frame(undefined, true);
 }
 
@@ -428,7 +490,7 @@ addEventListener('hashchange', route);
 /* ---------- 시작 ---------- */
 measureTitle();
 layoutFlow();
-tiles.forEach((t) => setGhost(t, Math.random() < FLOW.ghost));
+tiles.forEach((t) => { const real = Math.random() >= FLOW.ghost; if (real) lastReal[t.m.id] = 0; setGhost(t, !real); });
 route();
 // 처음엔 제자리에 놓고 천천히 맺힌다. 숨은 탭(rAF가 멈춤)에서는 바로 보이게
 for (const t of tiles) { Object.assign(t, target(t)); if (!document.hidden && !reduce) t.o = 0; }

@@ -105,6 +105,7 @@ a.s-item:focus-visible .s-pic { outline: 2px solid var(--ink); outline-offset: -
   margin: 0 0 -.06em; white-space: nowrap;
   font: 700 clamp(96px, 17.5vw, 340px)/.8 var(--f-sans); font-stretch: 80%; letter-spacing: -.025em; text-transform: uppercase;
 }
+.ix-title .hx-c { display: inline-block; } /* 글자마다 굵기·폭이 따로 바뀐다(js runTitleHover) */
 .ix-side { padding-bottom: 6px; }
 .ix-desc { margin: 0 0 18px; font-size: 22px; line-height: 1.25; }
 .ix-meta {
@@ -241,3 +242,32 @@ body.pin-on .a-pin { opacity: 1; translate: -50% 0; }
   #view.is-in { transition: none; }
   .s-pic img { transition: none; }
 }
+
+/* =========================================================
+   프리로더 — 페이지에 들어올 때마다 한 번.
+   검정 막(곡선 가장자리)이 위로 걷히면 → 연주자 사진이 화면을 꽉 채운 채 빠르게 바뀌고 ARTISTS가 여러 서체로 바뀐다
+   → 검정 막이 아래에서 올라와 덮었다가 → 다시 위로 걷히며 페이지가 드러난다 (AUGE 전환 방식)
+   ========================================================= */
+body.pl-on { overflow: hidden; }
+.pl { position: fixed; inset: 0; z-index: 300; pointer-events: none; }
+body.pl-on .pl { pointer-events: auto; }
+.pl-stage { position: absolute; inset: 0; background: #000; overflow: hidden; }
+.pl-imgs img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; opacity: 0; }
+.pl-imgs img.is-on { opacity: 1; }
+.pl-stage::after { content: ""; position: absolute; inset: 0; background: rgba(0, 0, 0, .3); }
+.pl-word {
+  position: absolute; left: 0; right: 0; top: 50%; translate: 0 -50%; z-index: 1; margin: 0;
+  text-align: center; color: #fff; text-transform: uppercase; white-space: nowrap;
+  font: 400 clamp(64px, 15vw, 300px)/1 var(--f-sans); letter-spacing: 0;
+}
+/* 검정 막 — 화면보다 길게 만들어 끝을 둥글게. 위로 걷힐 때는 아래 끝이, 올라와 덮을 때는 위 끝이 볼록하다 */
+.pl-curtain {
+  position: absolute; left: -10vw; right: -10vw; top: 0; height: 125vh; background: #000;
+  border-radius: 0 0 50% 50% / 0 0 22vh 22vh;
+  transform: translateY(0); transition: transform .75s cubic-bezier(.76, 0, .24, 1);
+}
+.pl-curtain.is-up { transform: translateY(-130%); }
+.pl-curtain.is-below { transition: none; transform: translateY(135vh); border-radius: 50% 50% 0 0 / 22vh 22vh 0 0; top: -25vh; }
+.pl-curtain.is-rise { border-radius: 50% 50% 0 0 / 22vh 22vh 0 0; top: -25vh; transform: translateY(0); }
+.pl.is-done { display: none; }
+@media (prefers-reduced-motion: reduce) { .pl { display: none; } body.pl-on { overflow: auto; } }

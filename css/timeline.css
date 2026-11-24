@@ -2006,3 +2006,247 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible { outline: 
 }
 #ch-marshall-super-lead .hx-fullphoto .block { color:#f2efe8; }
 @media(max-width:900px) { :root[lang] #ch-marshall-super-lead .block p { font-size:18px; } }
+
+/* Arbiter Fuzz Face: the round pedal rises from below (Twin grammar, unlike the Super Lead pushed in from the right);
+   the stage fills the left half with Ringo’s 1963 Ludwig kit (sold by Arbiter) and puts the text on the right. */
+:root[lang] #ch-fuzz-face .block p { font-size:21px;line-height:1.45; }
+#ch-fuzz-face .block p + p { margin-top:1em; }
+#ch-fuzz-face .gl-txt { max-width:calc(100vw - 2 * var(--gutter)); }
+@media(min-width:901px) {
+ #ch-fuzz-face .stage--whole .stage-tl { filter:none;top:0;bottom:auto;left:0;right:auto;width:50vw;height:100svh;object-fit:cover;object-position:50% 62%;
+   transform:translate3d(calc((1 - var(--s1,0)) * -50vw + var(--x,0) * -100vw),0,0); }
+ #ch-fuzz-face .hero-steps { max-width:none; }
+ #ch-fuzz-face .hero-step { justify-items:end;text-align:left;padding-right:calc((50vw - clamp(425px,27vw,580px)) / 2); }
+ #ch-fuzz-face .ch-head.has-entry--half ~ .hero-wrap .hero-step .block { width:clamp(425px,27vw,580px);max-width:none; }
+ #ch-fuzz-face .hx-panel.hx-photohalf .hx-text { width:clamp(425px,25vw,560px);max-width:none;padding:0;box-sizing:border-box;justify-self:center;margin:0; }
+ #ch-fuzz-face .hx-panel.hx-photohalf .block { width:100%;max-width:none; }
+}
+@media(max-width:900px) { :root[lang] #ch-fuzz-face .block p { font-size:18px; } }
+
+/* Vox V846 Wah-Wah: the whole pedal slides in from the right edge (2026-11-23: was cut top and bottom, too big) (unlike the Fuzz Face rising from below);
+   title and year sit in the left half. The stage shows the Super Beatle head, where the wah was found, on the left. */
+:root[lang] #ch-vox-v846 .block p { font-size:21px;line-height:1.45; }
+#ch-vox-v846 .block p + p { margin-top:1em; }
+#ch-vox-v846 .gl-txt { max-width:calc(100vw - 2 * var(--gutter)); }
+@media(min-width:901px) {
+ #ch-vox-v846 .ch-entry.ch-entry--half img { left:calc(var(--ecx,74vw) - var(--eh) * .2065);transform:translate3d(calc((1 - var(--p,0)) * 60vw), calc(var(--lv,0) * -60svh), 0); }
+ #ch-vox-v846 .ch-head.has-entry--half { --tl:var(--gutter);--yfs:clamp(200px, min(38vw, calc((74vw - var(--eh) * .2065 - var(--gutter) - 3vw) / 2.2)), 600px); }
+ #ch-vox-v846 .ch-head.has-entry--half h2, #ch-vox-v846 .ch-head.has-entry--half .ch-meta { left:var(--tl);right:auto;text-align:left;justify-content:flex-start; }
+ #ch-vox-v846 .ch-head.has-entry--half .ch-bgyear--in { left:calc(var(--tl) - .03em);right:auto;bottom:calc(var(--tb) + var(--h2s) * .11 - var(--yfs) * .035); }
+ #ch-vox-v846 .stage--whole .stage-tl { filter:drop-shadow(0 2svh 2.6svh rgba(21,19,15,.26));height:min(40svh,22vw);top:calc(50svh - min(40svh,22vw) / 2);bottom:auto;left:5vw;right:auto;transform:translate3d(calc((1 - var(--s1,0)) * -70vw + var(--x,0) * -100vw),0,0); }
+ #ch-vox-v846 .hero-steps { max-width:none; }
+ #ch-vox-v846 .hero-step { justify-items:end;text-align:left;padding-right:9vw; }
+ #ch-vox-v846 .ch-head.has-entry--half ~ .hero-wrap .hero-step .block { width:clamp(425px,27vw,580px);max-width:none; }
+ #ch-vox-v846 .hx-panel.hx-photohalf .hx-text { width:clamp(425px,25vw,560px);max-width:none;padding:0;box-sizing:border-box;justify-self:center;margin:0; }
+ #ch-vox-v846 .hx-panel.hx-photohalf .block { width:100%;max-width:none; }
+}
+@media(max-width:900px) { :root[lang] #ch-vox-v846 .block p { font-size:18px; } }
+
+/* Roland RE-201 Space Echo: the wide cabinet rises from below with its top half (logo, meter, Mode Selector) showing,
+   unlike the V846 standing on the right; the stage fills the left half with the 1974 RE-101/RE-201 brochure. */
+:root[lang] #ch-roland-re-201 .block p { font-size:21px;line-height:1.45; }
+#ch-roland-re-201 .block p + p { margin-top:1em; }
+#ch-roland-re-201 .gl-txt { max-width:calc(100vw - 2 * var(--gutter)); }
+@media(min-width:901px) {
+ #ch-roland-re-201 .ch-head.has-entry--half { --yfs:clamp(150px, 23vw, 440px); }
+ #ch-roland-re-201 .stage--whole .stage-tl { filter:none;top:0;bottom:auto;left:0;right:auto;width:50vw;height:100svh;object-fit:cover;object-position:50% 10%;
+   transform:translate3d(calc((1 - var(--s1,0)) * -50vw + var(--x,0) * -100vw),0,0); }
+ #ch-roland-re-201 .hero-steps { max-width:none; }
+ #ch-roland-re-201 .hero-step { justify-items:end;text-align:left;padding-right:calc((50vw - clamp(425px,27vw,580px)) / 2); }
+ #ch-roland-re-201 .ch-head.has-entry--half ~ .hero-wrap .hero-step .block { width:clamp(425px,27vw,580px);max-width:none; }
+ #ch-roland-re-201 .hx-panel.hx-photohalf .hx-text { width:clamp(425px,25vw,560px);max-width:none;padding:0;box-sizing:border-box;justify-self:center;margin:0; }
+ #ch-roland-re-201 .hx-panel.hx-photohalf .block { width:100%;max-width:none; }
+ #ch-roland-re-201 figure.hx-sheet img { transform:none; }
+ #ch-roland-re-201 .hx-fullphoto .hx-dim { background:linear-gradient(90deg,rgba(11,10,9,.84) 0,rgba(11,10,9,.66) 30%,rgba(11,10,9,0) 52%); }
+ #ch-roland-re-201 .hx-panel.hx-fullphoto .hx-text { position:absolute;bottom:12svh;top:auto;left:var(--gutter);right:auto;margin:0;width:clamp(425px,28vw,580px);max-width:none; }
+}
+#ch-roland-re-201 .hx-fullphoto .block { color:#f2efe8; }
+@media(max-width:900px) { :root[lang] #ch-roland-re-201 .block p { font-size:18px; } }
+
+/* BOSS DS-1: the whole orange pedal slides in from the left (V846 comes from the right, RE-201 rises from below);
+   title and year sit to its right. The stage puts the 1977 compact trio in the right half and the text on the left. */
+:root[lang] #ch-boss-ds-1 .block p { font-size:21px;line-height:1.45; }
+#ch-boss-ds-1 .block p + p { margin-top:1em; }
+#ch-boss-ds-1 .gl-txt { max-width:calc(100vw - 2 * var(--gutter)); }
+@media(min-width:901px) {
+ #ch-boss-ds-1 .ch-entry.ch-entry--half img { left:calc(var(--ecx,24vw) - var(--eh) * .3289);right:auto;transform:translate3d(calc((1 - var(--p,0)) * -60vw), calc(var(--lv,0) * -60svh), 0); }
+ #ch-boss-ds-1 .ch-head.has-entry--half { --tl:calc(var(--ecx,24vw) + var(--eh) * .3289 + 5vw);--yfs:clamp(200px, min(30vw, calc((100vw - var(--tl) - var(--gutter)) / 2.3)), 460px); }
+ #ch-boss-ds-1 .ch-head.has-entry--half h2, #ch-boss-ds-1 .ch-head.has-entry--half .ch-meta { left:var(--tl);right:auto;text-align:left;justify-content:flex-start; }
+ #ch-boss-ds-1 .ch-head.has-entry--half .ch-bgyear--in { left:calc(var(--tl) - .03em);right:auto;bottom:calc(var(--tb) + var(--h2s) * .11 - var(--yfs) * .035); }
+ #ch-boss-ds-1 .stage--whole .stage-br { filter:none;top:0;bottom:auto;left:auto;right:0;width:50vw;height:100svh;object-fit:cover;object-position:50% 55%;
+   transform:translate3d(calc((1 - var(--s1,0)) * 50vw + var(--x,0) * 100vw),0,0); }
+ #ch-boss-ds-1 .hero-steps { max-width:none; }
+ #ch-boss-ds-1 .hero-step { justify-items:start;text-align:left;padding-left:calc((50vw - clamp(425px,27vw,580px)) / 2); }
+ #ch-boss-ds-1 .ch-head.has-entry--half ~ .hero-wrap .hero-step .block { width:clamp(425px,27vw,580px);max-width:none; }
+ #ch-boss-ds-1 .hx-panel.hx-photohalf .hx-text { width:clamp(425px,25vw,560px);max-width:none;padding:0;box-sizing:border-box;justify-self:center;margin:0; }
+ #ch-boss-ds-1 .hx-panel.hx-photohalf .block { width:100%;max-width:none; }
+ #ch-boss-ds-1 .hx-fullphoto .hx-dim { background:linear-gradient(90deg,rgba(11,10,9,.86) 0,rgba(11,10,9,.7) 30%,rgba(11,10,9,0) 52%); }
+ #ch-boss-ds-1 .hx-panel.hx-fullphoto .hx-text { position:absolute;bottom:12svh;top:auto;left:var(--gutter);right:auto;margin:0;width:clamp(425px,28vw,580px);max-width:none; }
+}
+#ch-boss-ds-1 .hx-fullphoto .block { color:#f2efe8; }
+@media(max-width:900px) { :root[lang] #ch-boss-ds-1 .block p { font-size:18px; } }
+
+/* ProCo RAT: the whole 1979 Big Box slides in from the right (DS-1 came from the left); the only frontal photo found is 900px,
+   so it stays near native size. Title and year on the left; the stage puts Charlie Wicks in the left half. */
+:root[lang] #ch-proco-rat .block p { font-size:21px;line-height:1.45; }
+#ch-proco-rat .block p + p { margin-top:1em; }
+#ch-proco-rat .gl-txt { max-width:calc(100vw - 2 * var(--gutter)); }
+@media(min-width:901px) {
+ #ch-proco-rat .ch-entry.ch-entry--half img { left:calc(var(--ecx,73vw) - var(--eh) * .6074);right:auto;transform:translate3d(calc((1 - var(--p,0)) * 60vw), calc(var(--lv,0) * -60svh), 0); }
+ #ch-proco-rat .ch-head.has-entry--half { --tl:var(--gutter);--yfs:clamp(200px, min(30vw, calc((73vw - var(--eh) * .6074 - var(--gutter) - 4vw) / 2.2)), 460px); }
+ #ch-proco-rat .ch-head.has-entry--half h2, #ch-proco-rat .ch-head.has-entry--half .ch-meta { left:var(--tl);right:auto;text-align:left;justify-content:flex-start; }
+ #ch-proco-rat .ch-head.has-entry--half .ch-bgyear--in { left:calc(var(--tl) - .03em);right:auto;bottom:calc(var(--tb) + var(--h2s) * .11 - var(--yfs) * .035); }
+ #ch-proco-rat .stage--whole .stage-tl { filter:none;top:0;bottom:auto;left:0;right:auto;width:50vw;height:100svh;object-fit:cover;object-position:50% 40%;
+   transform:translate3d(calc((1 - var(--s1,0)) * -50vw + var(--x,0) * -100vw),0,0); }
+ #ch-proco-rat .hero-steps { max-width:none; }
+ #ch-proco-rat .hero-step { justify-items:end;text-align:left;padding-right:calc((50vw - clamp(425px,27vw,580px)) / 2); }
+ #ch-proco-rat .ch-head.has-entry--half ~ .hero-wrap .hero-step .block { width:clamp(425px,27vw,580px);max-width:none; }
+ #ch-proco-rat .hx-panel.hx-photohalf .hx-text { width:clamp(425px,25vw,560px);max-width:none;padding:0;box-sizing:border-box;justify-self:center;margin:0; }
+ #ch-proco-rat .hx-panel.hx-photohalf .block { width:100%;max-width:none; }
+ #ch-proco-rat figure.hx-sheet img { transform:none; }
+}
+@media(max-width:900px) { :root[lang] #ch-proco-rat .block p { font-size:18px; } }
+
+/* Ibanez TS808: the green pedal rises from below with its knobs and label showing (RAT slid in from the right);
+   the stage puts Hoshino Gakki's Nagoya headquarters in the left half. */
+:root[lang] #ch-ibanez-ts808 .block p { font-size:21px;line-height:1.45; }
+#ch-ibanez-ts808 .block p + p { margin-top:1em; }
+#ch-ibanez-ts808 .gl-txt { max-width:calc(100vw - 2 * var(--gutter)); }
+@media(min-width:901px) {
+ #ch-ibanez-ts808 .stage--whole .stage-tl { filter:none;top:0;bottom:auto;left:0;right:auto;width:50vw;height:100svh;object-fit:cover;object-position:50% 50%;
+   transform:translate3d(calc((1 - var(--s1,0)) * -50vw + var(--x,0) * -100vw),0,0); }
+ #ch-ibanez-ts808 .hero-steps { max-width:none; }
+ #ch-ibanez-ts808 .hero-step { justify-items:end;text-align:left;padding-right:calc((50vw - clamp(425px,27vw,580px)) / 2); }
+ #ch-ibanez-ts808 .ch-head.has-entry--half ~ .hero-wrap .hero-step .block { width:clamp(425px,27vw,580px);max-width:none; }
+ #ch-ibanez-ts808 .hx-panel.hx-photohalf .hx-text { width:clamp(425px,25vw,560px);max-width:none;padding:0;box-sizing:border-box;justify-self:center;margin:0; }
+ #ch-ibanez-ts808 .hx-panel.hx-photohalf .block { width:100%;max-width:none; }
+ #ch-ibanez-ts808 figure.hx-sheet img { transform:none; }
+}
+@media(max-width:900px) { :root[lang] #ch-ibanez-ts808 .block p { font-size:18px; } }
+
+/* Marshall JCM800 2203: the head is pushed in from the left edge with about 78% showing, so the JCM 800 label stays
+   in view (Super Lead came from the right; TS808 before it rises from below). Title on the right. */
+:root[lang] #ch-marshall-jcm800 .block p { font-size:21px;line-height:1.45; }
+#ch-marshall-jcm800 .block p + p { margin-top:1em; }
+#ch-marshall-jcm800 .gl-txt { max-width:calc(100vw - 2 * var(--gutter)); }
+@media(min-width:901px) {
+ #ch-marshall-jcm800 .ch-head.has-entry--half { --ar:2.6667;--vis:calc(var(--eh) * var(--ar) * .78);--tl:calc(var(--vis) + 4vw);
+   --yfs:clamp(200px, min(30vw, calc((100vw - var(--tl) - var(--gutter)) / 2.2)), 460px); }
+ #ch-marshall-jcm800 .ch-entry.ch-entry--half img { left:calc(var(--vis) - var(--eh) * var(--ar));right:auto;top:30svh;
+   transform:translate3d(calc((1 - var(--p,0)) * (-1 * var(--vis) - 8vw)), calc(var(--lv,0) * -40svh), 0); }
+ #ch-marshall-jcm800 .ch-head.has-entry--half h2, #ch-marshall-jcm800 .ch-head.has-entry--half .ch-meta { left:var(--tl);right:auto;text-align:left;justify-content:flex-start; }
+ #ch-marshall-jcm800 .ch-head.has-entry--half .ch-bgyear--in { left:calc(var(--tl) - .03em);right:auto;bottom:calc(var(--tb) + var(--h2s) * .11 - var(--yfs) * .035); }
+ #ch-marshall-jcm800 .stage--whole .stage-br { filter:none;top:0;bottom:auto;left:auto;right:0;width:50vw;height:100svh;object-fit:cover;object-position:50% 40%;
+   transform:translate3d(calc((1 - var(--s1,0)) * 50vw + var(--x,0) * 100vw),0,0); }
+ #ch-marshall-jcm800 .hero-steps { max-width:none; }
+ #ch-marshall-jcm800 .hero-step { justify-items:start;text-align:left;padding-left:calc((50vw - clamp(425px,27vw,580px)) / 2); }
+ #ch-marshall-jcm800 .ch-head.has-entry--half ~ .hero-wrap .hero-step .block { width:clamp(425px,27vw,580px);max-width:none; }
+ #ch-marshall-jcm800 .hx-panel.hx-photohalf .hx-text { width:clamp(425px,25vw,560px);max-width:none;padding:0;box-sizing:border-box;justify-self:center;margin:0; }
+ #ch-marshall-jcm800 .hx-panel.hx-photohalf .block { width:100%;max-width:none; }
+ #ch-marshall-jcm800 .hx-fullphoto .hx-dim { background:linear-gradient(90deg,rgba(11,10,9,.86) 0,rgba(11,10,9,.7) 30%,rgba(11,10,9,0) 52%); }
+ #ch-marshall-jcm800 .hx-panel.hx-fullphoto .hx-text { position:absolute;bottom:12svh;top:auto;left:var(--gutter);right:auto;margin:0;width:clamp(425px,28vw,580px);max-width:none; }
+}
+#ch-marshall-jcm800 .hx-fullphoto .block { color:#f2efe8; }
+@media(max-width:900px) { :root[lang] #ch-marshall-jcm800 .block p { font-size:18px; } }
+
+/* PRS Custom 24: a whole 1988 guitar drops in from the top on the right, neck running off the top edge, body fully in view (JCM800 came from the left).
+   The stage shows Paul Reed Smith at his Annapolis bench in the left half. */
+:root[lang] #ch-prs-custom-24 .block p { font-size:21px;line-height:1.45; }
+#ch-prs-custom-24 .block p + p { margin-top:1em; }
+#ch-prs-custom-24 .gl-txt { max-width:calc(100vw - 2 * var(--gutter)); }
+@media(min-width:901px) {
+ #ch-prs-custom-24 .ch-entry.ch-entry--half img { left:calc(var(--ecx,76vw) - var(--eh) * .1693);right:auto;transform:translate3d(0, calc((1 - var(--p,0)) * -110svh - var(--lv,0) * 60svh), 0); }
+ #ch-prs-custom-24 .ch-head.has-entry--half { --tl:var(--gutter);--yfs:clamp(200px, min(30vw, calc((76vw - var(--eh) * .1693 - var(--gutter) - 3vw) / 2.2)), 460px); }
+ #ch-prs-custom-24 .ch-head.has-entry--half h2, #ch-prs-custom-24 .ch-head.has-entry--half .ch-meta { left:var(--tl);right:auto;text-align:left;justify-content:flex-start; }
+ #ch-prs-custom-24 .ch-head.has-entry--half .ch-bgyear--in { left:calc(var(--tl) - .03em);right:auto;bottom:calc(var(--tb) + var(--h2s) * .11 - var(--yfs) * .035); }
+ #ch-prs-custom-24 .stage--whole .stage-tl { filter:none;top:0;bottom:auto;left:0;right:auto;width:50vw;height:100svh;object-fit:cover;object-position:60% 50%;
+   transform:translate3d(calc((1 - var(--s1,0)) * -50vw + var(--x,0) * -100vw),0,0); }
+ #ch-prs-custom-24 .hero-steps { max-width:none; }
+ #ch-prs-custom-24 .hero-step { justify-items:end;text-align:left;padding-right:calc((50vw - clamp(425px,27vw,580px)) / 2); }
+ #ch-prs-custom-24 .ch-head.has-entry--half ~ .hero-wrap .hero-step .block { width:clamp(425px,27vw,580px);max-width:none; }
+ #ch-prs-custom-24 .hx-panel.hx-photohalf .hx-text { width:clamp(425px,25vw,560px);max-width:none;padding:0;box-sizing:border-box;justify-self:center;margin:0; }
+ #ch-prs-custom-24 .hx-panel.hx-photohalf .block { width:100%;max-width:none; }
+ #ch-prs-custom-24 figure.hx-sheet img { transform:none; }
+}
+@media(max-width:900px) { :root[lang] #ch-prs-custom-24 .block p { font-size:18px; } }
+
+/* Ibanez RG550: the yellow body stands at the left edge, cut by the top and bottom (PRS stood at the right).
+   The stage puts Steve Vai on stage in the right half and the text on the left. */
+:root[lang] #ch-ibanez-rg550 .block p { font-size:21px;line-height:1.45; }
+#ch-ibanez-rg550 .block p + p { margin-top:1em; }
+#ch-ibanez-rg550 .gl-txt { max-width:calc(100vw - 2 * var(--gutter)); }
+@media(min-width:901px) {
+ #ch-ibanez-rg550 .stage--whole .stage-br { filter:none;top:0;bottom:auto;left:auto;right:0;width:50vw;height:100svh;object-fit:cover;object-position:50% 40%;
+   transform:translate3d(calc((1 - var(--s1,0)) * 50vw + var(--x,0) * 100vw),0,0); }
+ #ch-ibanez-rg550 .hero-steps { max-width:none; }
+ #ch-ibanez-rg550 .hero-step { justify-items:start;text-align:left;padding-left:calc((50vw - clamp(425px,27vw,580px)) / 2); }
+ #ch-ibanez-rg550 .ch-head.has-entry--half ~ .hero-wrap .hero-step .block { width:clamp(425px,27vw,580px);max-width:none; }
+ #ch-ibanez-rg550 .hx-panel.hx-photohalf .hx-text { width:clamp(425px,25vw,560px);max-width:none;padding:0;box-sizing:border-box;justify-self:center;margin:0; }
+ #ch-ibanez-rg550 .hx-panel.hx-photohalf .block { width:100%;max-width:none; }
+}
+@media(max-width:900px) { :root[lang] #ch-ibanez-rg550 .block p { font-size:18px; } }
+
+/* Klon Centaur: the whole gold pedal slides in from the right (RG550 stood at the left edge); title and year on the left.
+   The stage puts a boxed Centaur in the left half. */
+:root[lang] #ch-klon-centaur .block p { font-size:21px;line-height:1.45; }
+#ch-klon-centaur .block p + p { margin-top:1em; }
+#ch-klon-centaur .gl-txt { max-width:calc(100vw - 2 * var(--gutter)); }
+@media(min-width:901px) {
+ #ch-klon-centaur .ch-entry.ch-entry--half img { left:calc(var(--ecx,72vw) - var(--eh) * .652);right:auto;transform:translate3d(calc((1 - var(--p,0)) * 60vw), calc(var(--lv,0) * -60svh), 0); }
+ #ch-klon-centaur .ch-head.has-entry--half { --tl:var(--gutter);--yfs:clamp(200px, min(30vw, calc((72vw - var(--eh) * .652 - var(--gutter) - 4vw) / 2.2)), 460px); }
+ #ch-klon-centaur .ch-head.has-entry--half h2, #ch-klon-centaur .ch-head.has-entry--half .ch-meta { left:var(--tl);right:auto;text-align:left;justify-content:flex-start; }
+ #ch-klon-centaur .ch-head.has-entry--half .ch-bgyear--in { left:calc(var(--tl) - .03em);right:auto;bottom:calc(var(--tb) + var(--h2s) * .11 - var(--yfs) * .035); }
+ #ch-klon-centaur .stage--whole .stage-tl { filter:none;top:0;bottom:auto;left:0;right:auto;width:50vw;height:100svh;object-fit:cover;object-position:50% 50%;
+   transform:translate3d(calc((1 - var(--s1,0)) * -50vw + var(--x,0) * -100vw),0,0); }
+ #ch-klon-centaur .hero-steps { max-width:none; }
+ #ch-klon-centaur .hero-step { justify-items:end;text-align:left;padding-right:calc((50vw - clamp(425px,27vw,580px)) / 2); }
+ #ch-klon-centaur .ch-head.has-entry--half ~ .hero-wrap .hero-step .block { width:clamp(425px,27vw,580px);max-width:none; }
+ #ch-klon-centaur .hx-panel.hx-photohalf .hx-text { width:clamp(425px,25vw,560px);max-width:none;padding:0;box-sizing:border-box;justify-self:center;margin:0; }
+ #ch-klon-centaur .hx-panel.hx-photohalf .block { width:100%;max-width:none; }
+ #ch-klon-centaur .hx-fullphoto .hx-dim { background:linear-gradient(90deg,rgba(11,10,9,0) 48%,rgba(11,10,9,.7) 70%,rgba(11,10,9,.86) 100%); }
+ #ch-klon-centaur .hx-panel.hx-fullphoto .hx-text { position:absolute;bottom:12svh;top:auto;right:var(--gutter);left:auto;margin:0;width:clamp(425px,28vw,580px);max-width:none; }
+}
+#ch-klon-centaur .hx-fullphoto .block { color:#f2efe8; }
+@media(max-width:900px) { :root[lang] #ch-klon-centaur .block p { font-size:18px; } }
+
+/* Kemper Profiler: the wide head rises from below with its logo and upper panel showing (Klon slid in from the right);
+   the stage puts Christoph Kemper in the left half. */
+:root[lang] #ch-kemper-profiler .block p { font-size:21px;line-height:1.45; }
+#ch-kemper-profiler .block p + p { margin-top:1em; }
+#ch-kemper-profiler .gl-txt { max-width:calc(100vw - 2 * var(--gutter)); }
+@media(min-width:901px) {
+ #ch-kemper-profiler .ch-head.has-entry--half { --yfs:clamp(150px, 23vw, 440px); }
+ #ch-kemper-profiler .stage--whole .stage-tl { filter:none;top:0;bottom:auto;left:0;right:auto;width:50vw;height:100svh;object-fit:cover;object-position:50% 40%;
+   transform:translate3d(calc((1 - var(--s1,0)) * -50vw + var(--x,0) * -100vw),0,0); }
+ #ch-kemper-profiler .hero-steps { max-width:none; }
+ #ch-kemper-profiler .hero-step { justify-items:end;text-align:left;padding-right:calc((50vw - clamp(425px,27vw,580px)) / 2); }
+ #ch-kemper-profiler .ch-head.has-entry--half ~ .hero-wrap .hero-step .block { width:clamp(425px,27vw,580px);max-width:none; }
+ #ch-kemper-profiler .hx-panel.hx-photohalf .hx-text { width:clamp(425px,25vw,560px);max-width:none;padding:0;box-sizing:border-box;justify-self:center;margin:0; }
+ #ch-kemper-profiler .hx-panel.hx-photohalf .block { width:100%;max-width:none; }
+ #ch-kemper-profiler figure.hx-sheet img { transform:none; }
+ #ch-kemper-profiler .hx-fullphoto .hx-dim { background:linear-gradient(90deg,rgba(11,10,9,.86) 0,rgba(11,10,9,.7) 30%,rgba(11,10,9,0) 52%); }
+ #ch-kemper-profiler .hx-panel.hx-fullphoto .hx-text { position:absolute;bottom:12svh;top:auto;left:var(--gutter);right:auto;margin:0;width:clamp(425px,28vw,580px);max-width:none; }
+}
+#ch-kemper-profiler .hx-fullphoto .block { color:#f2efe8; }
+@media(max-width:900px) { :root[lang] #ch-kemper-profiler .block p { font-size:18px; } }
+
+/* Strandberg Boden: the headless guitar stands at the left edge, its neck end showing at the top (Kemper rose from below);
+   it slides in from the left. The stage puts Ola Strandberg in the right half and the text on the left. */
+:root[lang] #ch-strandberg-boden .block p { font-size:21px;line-height:1.45; }
+#ch-strandberg-boden .block p + p { margin-top:1em; }
+#ch-strandberg-boden .gl-txt { max-width:calc(100vw - 2 * var(--gutter)); }
+@media(min-width:901px) {
+ #ch-strandberg-boden .ch-entry.ch-entry--half img { left:calc(var(--ecx,16vw) - var(--eh) * .2164);right:auto;transform:translate3d(calc((1 - var(--p,0)) * -60vw), calc(var(--lv,0) * -60svh), 0); }
+ #ch-strandberg-boden .ch-head.has-entry--half.has-entry--left { --tl:max(28vw, calc(var(--ecx,16vw) + var(--eh) * .2164 + 4vw));--yfs:clamp(200px, min(30vw, calc((100vw - var(--tl) - var(--gutter) - 96px) / 2.2)), 440px); }
+ #ch-strandberg-boden .stage--whole .stage-br { filter:none;top:0;bottom:auto;left:auto;right:0;width:50vw;height:100svh;object-fit:cover;object-position:45% 40%;
+   transform:translate3d(calc((1 - var(--s1,0)) * 50vw + var(--x,0) * 100vw),0,0); }
+ #ch-strandberg-boden .hero-steps { max-width:none; }
+ #ch-strandberg-boden .hero-step { justify-items:start;text-align:left;padding-left:calc((50vw - clamp(425px,27vw,580px)) / 2); }
+ #ch-strandberg-boden .ch-head.has-entry--half ~ .hero-wrap .hero-step .block { width:clamp(425px,27vw,580px);max-width:none; }
+ #ch-strandberg-boden .hx-panel.hx-photohalf .hx-text { width:clamp(425px,25vw,560px);max-width:none;padding:0;box-sizing:border-box;justify-self:center;margin:0; }
+ #ch-strandberg-boden .hx-panel.hx-photohalf .block { width:100%;max-width:none; }
+ #ch-strandberg-boden .hx-fullphoto .hx-dim { background:linear-gradient(90deg,rgba(11,10,9,.86) 0,rgba(11,10,9,.7) 30%,rgba(11,10,9,0) 52%); }
+ #ch-strandberg-boden .hx-panel.hx-fullphoto .hx-text { position:absolute;bottom:12svh;top:auto;left:var(--gutter);right:auto;margin:0;width:clamp(425px,28vw,580px);max-width:none; }
+}
+#ch-strandberg-boden .hx-fullphoto .block { color:#f2efe8; }
+@media(max-width:900px) { :root[lang] #ch-strandberg-boden .block p { font-size:18px; } }

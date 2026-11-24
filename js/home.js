@@ -323,8 +323,8 @@ function headlineFrame() {
 /* ---------- 공개 범위 — Timeline(js/timeline.js)의 BUILD_UNTIL·BUILD_SKIP을 그대로 읽는다 ---------- */
 async function chapters() {
   const [src, data] = await Promise.all([
-    fetch('js/timeline.js?v=202611170339').then((r) => r.text()),
-    fetch('data/timeline.en.json?v=202611170339').then((r) => r.json()),
+    fetch('js/timeline.js?v=202611240952').then((r) => r.text()),
+    fetch('data/timeline.en.json?v=202611240952').then((r) => r.json()),
   ]);
   const until = (src.match(/const BUILD_UNTIL = '([^']+)'/) || [])[1];
   const skip = ((src.match(/const BUILD_SKIP = \[([^\]]*)\]/) || [])[1] || '').match(/'([^']+)'/g)?.map((s) => s.slice(1, -1)) || [];
@@ -387,9 +387,6 @@ async function start() {
   let list = [];
   try { list = await chapters(); } catch (e) { console.warn('챕터 목록을 읽지 못했습니다', e); }
   if (list.length) {
-    const first = list[0], lastC = list[list.length - 1];
-    const span = `${first.year}–${lastC.year}`;
-    for (const el of document.querySelectorAll('[data-range]')) el.textContent = `${span} · ${list.length} instruments`;
     // 인화지 순서 — 공개된 챕터 순서대로, 그 챕터의 자료를 모두
     const pos = new Map(list.map((c, i) => [c.id, i]));
     order = [...order].sort((a, b) => (pos.get(nodes[a].it.ch) ?? 99) - (pos.get(nodes[b].it.ch) ?? 99) || a - b);
@@ -407,5 +404,22 @@ addEventListener('resize', () => {
     measureHeadline();
   });
 });
+
+/* ---------- 섹션 스냅 — 세 섹션(Timeline·Artists·Gallery) 근처에서 스크롤을 멈추면 그 섹션에 살짝 맞춘다 ----------
+   섹션은 sticky로 겹쳐 쌓이므로 CSS scroll-snap 대신, 멈춘 자리가 섹션 시작에서 화면 높이의 30% 안이면 부드럽게 맞춘다 */
+let snapT = 0, snapping = false;
+addEventListener('scroll', () => {
+  if (snapping || document.body.classList.contains('is-booting')) return;
+  clearTimeout(snapT);
+  snapT = setTimeout(() => {
+    const H = innerHeight, base = document.getElementById('sections').offsetTop, y = scrollY;
+    const stops = [0, ...panels.map((_, i) => base + i * H)];
+    const near = stops.reduce((a, b) => (Math.abs(b - y) < Math.abs(a - y) ? b : a));
+    if (Math.abs(near - y) < 2 || Math.abs(near - y) > H * 0.3) return;
+    snapping = true;
+    scrollTo({ top: near, behavior: REDUCED ? 'auto' : 'smooth' });
+    setTimeout(() => { snapping = false; }, 700);
+  }, 160);
+}, { passive: true });
 
 start();

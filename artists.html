@@ -10,9 +10,17 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400..800&family=Instrument+Sans:wdth,wght@75..100,400..700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="css/artists.css?v=202611170339" />
+<!-- 프리로더용 서체 — "ARTISTS"에 쓰는 글자(A R T I S)만 받는다 -->
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Rubik+Mono+One&family=UnifrakturMaguntia&family=Monoton&family=Bungee&family=Abril+Fatface&family=Rye&family=Rock+Salt&family=Special+Elite&family=Press+Start+2P&family=Pacifico&family=Shrikhand&family=Bungee+Shade&family=Black+Ops+One&family=Pirata+One&family=Playfair+Display:ital,wght@1,900&family=Righteous&text=ARTIS&display=block" rel="stylesheet" />
+<link rel="stylesheet" href="css/artists.css?v=202611240952" />
 </head>
-<body data-view="index">
+<body data-view="index" class="pl-on">
+
+<!-- 프리로더: 검정이 걷히면 연주자 사진과 여러 서체의 ARTISTS가 빠르게 바뀌고, 검정이 다시 덮였다 걷히며 페이지가 드러난다 -->
+<div class="pl" aria-hidden="true">
+  <div class="pl-stage"><div class="pl-imgs"></div><p class="pl-word">Artists</p></div>
+  <div class="pl-curtain"></div>
+</div>
 
 <a class="skip" href="#view">Skip to the content</a>
 
@@ -22,12 +30,13 @@
     <a href="timeline.html">Timeline</a>
     <a href="artists.html" aria-current="page">Artists</a>
     <a href="gallery.html">Gallery</a>
+    <a href="signal.html">Signal</a>
   </nav>
 </header>
 
 <main id="view" tabindex="-1"></main>
 
 <noscript><p class="noscript">This page needs JavaScript to show the artists.</p></noscript>
-<script type="module" src="js/artists.js?v=202611170339"></script>
+<script type="module" src="js/artists.js?v=202611240952"></script>
 </body>
 </html>

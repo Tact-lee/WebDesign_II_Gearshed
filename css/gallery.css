@@ -84,18 +84,21 @@ body.is-open .title { opacity: 0; filter: blur(8px); scale: .96; }
 }
 .tile img.is-in { opacity: 1; }
 /* 가리키면 살짝 커진다 */
-.tile:hover, .tile:focus-visible { z-index: 3; }
+.tile:hover, .tile:focus-visible { z-index: 20 !important; } /* 겹 순서(js)보다 위 */
 .tile:hover img, .tile:focus-visible img { scale: 1.06; }
 
-/* 옅은 박스 — 흐름에서 대부분의 사진은 바탕보다 한 톤 짙은 칸으로 지나가고, 가리키면 원래 사진이 드러난다 */
+/* 회색 박스 — 흐름에서 사진의 60%는 바탕보다 한 톤 짙은 빈 칸으로 지나가고, 가리키면 원래 사진이 드러난다 */
 body[data-mode="flow"]:not(.is-open) .tile.is-ghost {
   background: var(--cream-2); transition: background-color .5s var(--ease);
 }
-body[data-mode="flow"]:not(.is-open) .tile.is-ghost img.is-in { opacity: .045; filter: grayscale(1); transition: opacity .5s var(--ease), filter .5s var(--ease), scale .5s var(--ease); }
+/* 먼 겹일수록 바탕에 가까운 색 — 박스끼리 겹쳐도 경계가 보이고 깊이가 생긴다 */
+body[data-mode="flow"]:not(.is-open) .tile.is-ghost[data-layer="0"] { background: #e6e3da; }
+body[data-mode="flow"]:not(.is-open) .tile.is-ghost[data-layer="2"] { background: #dbd7cb; }
+body[data-mode="flow"]:not(.is-open) .tile.is-ghost img.is-in { opacity: 0; transition: opacity .5s var(--ease), scale .5s var(--ease); }
 body[data-mode="flow"]:not(.is-open) .tile.is-ghost:hover,
 body[data-mode="flow"]:not(.is-open) .tile.is-ghost:focus-visible { background: transparent; }
 body[data-mode="flow"]:not(.is-open) .tile.is-ghost:hover img,
-body[data-mode="flow"]:not(.is-open) .tile.is-ghost:focus-visible img { opacity: 1; filter: none; }
+body[data-mode="flow"]:not(.is-open) .tile.is-ghost:focus-visible img { opacity: 1; }
 .tile.is-off { pointer-events: none; }
 .tile:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
 
@@ -215,5 +218,7 @@ body.is-src .foot { display: none; }
   .title, .info, .t-cap, .glabel { transition: none; }
 }
 
-/* 흐름에서 진짜 사진은 박스 위에 */
-body[data-mode="flow"] .tile:not(.is-ghost) { z-index: 1; }
+
+/* 정렬을 바꾸는 동안 구로 모여 있을 때 — 제목·묶음 이름·사진 이름은 잠시 숨긴다 */
+body.is-gather .title, body.is-gather .glabel, body.is-gather .t-cap { opacity: 0 !important; }
+body.is-gather .title { filter: blur(8px); scale: .96; }

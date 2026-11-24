@@ -1,0 +1,186 @@
+/* =========================================================
+   GEARSHED — Signal Chain
+   한 화면: 왼쪽 기타 → 케이블 위 페달 → 오른쪽 앰프. 케이블은 그 지점의 소리 파형으로 그려진다.
+   아래 선반에서 기타·페달·앰프를 고른다. 토큰·서체·상단 바는 Artists와 같다.
+   ========================================================= */
+
+:root {
+  --cream: #ece9e1;
+  --cream-2: #e2ded3;
+  --cream-3: #d6d1c4;
+  --ink: #15130f;
+  --ink-2: #4b453c;
+  --ink-3: #6f675c;
+
+  --f-title: "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+  --f-sans: "Instrument Sans", var(--f-title);
+  --f-serif: "Instrument Serif", Georgia, serif;
+
+  --gutter: clamp(18px, 4vw, 72px);
+  --ease: cubic-bezier(.22, 1, .36, 1);
+
+  /* stage geometry (svh so the whole rig fits one screen) */
+  --floor: 64svh;            /* where the guitar and amp stand */
+  --cy: calc(var(--floor) - 8svh);   /* cable height */
+  --gh: 54svh;               /* guitar height */
+  --ph: 14svh;               /* pedal base height */
+}
+
+* { box-sizing: border-box; }
+html { -webkit-font-smoothing: antialiased; background: var(--cream); scrollbar-color: var(--ink-3) var(--cream); }
+body { margin: 0; background: var(--cream); color: var(--ink); font-family: var(--f-serif); font-size: 21px; line-height: 1.3; overflow-x: hidden; }
+::selection { background: var(--ink); color: var(--cream); }
+a { color: inherit; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+#rig:focus { outline: none; }
+img { display: block; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.noscript { padding: 120px var(--gutter); }
+
+.skip {
+  position: fixed; left: var(--gutter); top: 12px; z-index: 200;
+  padding: 10px 16px; background: var(--ink); color: var(--cream);
+  font: 600 13px/1 var(--f-title); text-decoration: none;
+  transform: translateY(-160%); transition: transform .2s var(--ease);
+}
+.skip:focus, .skip:focus-visible { transform: none; outline: 2px solid var(--cream); outline-offset: 2px; }
+
+/* ---------- top bar (same as Artists) ---------- */
+.bar {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 60;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  padding: 18px var(--gutter); font-family: var(--f-title);
+}
+.brand { font-weight: 800; font-size: 19px; letter-spacing: -.02em; text-decoration: none; justify-self: start; }
+.brand span { opacity: .55; }
+.bar-nav { display: flex; gap: 22px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+.bar-nav a { text-decoration: none; opacity: .9; transition: opacity .25s; }
+.bar-nav a:hover, .bar-nav a[aria-current] { opacity: 1; text-decoration: underline; text-underline-offset: 5px; }
+
+/* ---------- the rig: one screen ---------- */
+#rig { position: relative; height: 100svh; min-height: 640px; overflow: hidden; }
+
+/* title on the right so the guitar can stand tall on the left; Play sits in the empty middle above the cable */
+.head { position: absolute; right: var(--gutter); top: 10svh; z-index: 3; width: min(560px, 31vw); }
+h1 { margin: 0; font: 700 clamp(40px, 4.4vw, 76px)/.95 var(--f-title); letter-spacing: -.035em; }
+.lede { margin: 2.2svh 0 0; font-size: 21px; line-height: 1.32; color: var(--ink-2); }
+
+.transport { position: absolute; left: 50%; top: 12svh; transform: translateX(-50%); z-index: 3; display: flex; align-items: center; gap: 28px; font-family: var(--f-title); }
+.play {
+  display: inline-flex; align-items: center; gap: 12px; height: 52px; padding: 0 26px 0 20px;
+  background: var(--ink); color: var(--cream); border-radius: 26px;
+  font: 600 15px/1 var(--f-title); letter-spacing: .01em;
+  box-shadow: 0 6px 18px -8px rgba(21, 19, 15, .5);
+  transition: transform .25s var(--ease), box-shadow .25s var(--ease);
+}
+.play:hover { transform: translateY(-1px); box-shadow: 0 10px 22px -10px rgba(21, 19, 15, .55); }
+.play:active { transform: translateY(1px); }
+.play[aria-busy="true"] { cursor: progress; opacity: .8; }
+.ico { width: 18px; height: 18px; fill: currentColor; }
+.ico-stop, .play[aria-pressed="true"] .ico-play { display: none; }
+.play[aria-pressed="true"] .ico-stop { display: block; }
+.vol { display: flex; align-items: center; gap: 12px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-2); }
+.vol input { width: 120px; accent-color: var(--ink); }
+
+/* ---------- stage ---------- */
+.stage { position: absolute; inset: 0; z-index: 1; }
+.wire { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.slot { position: absolute; margin: 0; }
+.slot img { filter: drop-shadow(0 1.6svh 2svh rgba(21, 19, 15, .22)); transition: opacity .35s var(--ease); }
+.slot.is-swapping img { opacity: 0; }
+.slot figcaption, .pedal .name { font: 500 12px/1.25 var(--f-title); letter-spacing: .02em; color: var(--ink-2); white-space: nowrap; }
+.slot figcaption b, .pedal .name b { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; margin-right: .5em; }
+
+.slot-guitar { left: calc(var(--gutter) + 3vw); bottom: calc(100svh - var(--floor)); }
+.slot-guitar img { height: var(--gh); width: auto; }
+.slot-guitar figcaption { position: absolute; left: 0; top: calc(100% + 1.6svh); }
+
+.slot-amp { right: calc(var(--gutter) + 5vw); bottom: calc(100svh - var(--floor)); }
+.slot-amp img { height: var(--ah, 32svh); width: auto; }
+.slot-amp figcaption { position: absolute; left: 0; top: calc(100% + 1.6svh); }
+
+.board { list-style: none; margin: 0; padding: 0; }
+.pedal {
+  position: absolute; top: var(--cy); left: 0; z-index: 2;
+  transform: translate3d(calc(var(--x, 0px) - 50%), -50%, 0);
+  transition: transform .45s var(--ease);
+  touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab;
+}
+.pedal.is-dragging { transition: none; cursor: grabbing; z-index: 5; }
+.pedal.is-new { transition: none; animation: drop .5s var(--ease); }
+@keyframes drop { from { opacity: 0; translate: 0 -3svh; } }
+.pedal.is-out { opacity: .35; }
+.pedal img { height: calc(var(--ph) * var(--h, 1) * var(--s, 1)); width: auto; filter: drop-shadow(0 1.2svh 1.4svh rgba(21, 19, 15, .26)); pointer-events: none; }
+.pedal .name { position: absolute; left: 50%; top: calc(100% + 1svh); transform: translateX(-50%); }
+.pedal:focus-visible { outline-offset: 8px; }
+
+/* ---------- shelf ---------- */
+.shelf {
+  position: absolute; left: var(--gutter); right: var(--gutter); bottom: 4svh; z-index: 3;
+  display: grid; grid-template-columns: auto 1fr auto; gap: 0 clamp(20px, 2.4vw, 56px); align-items: stretch;
+  padding-top: 2svh; border-top: 1px solid var(--cream-3);
+}
+.group { display: grid; grid-template-rows: auto 1fr; }
+.group .items { align-self: end; }
+.group h2 { margin: 0 0 1.6svh; font: 600 12px/1 var(--f-title); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.items { display: flex; align-items: flex-end; gap: clamp(8px, .7vw, 16px); }
+.g-pedals .items { justify-content: center; }
+.g-pedals h2 { text-align: center; }
+.g-amps h2 { text-align: right; }
+.g-amps .items { justify-content: flex-end; }
+
+
+.pick { display: grid; justify-items: center; gap: 1svh; font-family: var(--f-title); }
+.pick img { width: auto; opacity: .62; transition: opacity .25s var(--ease), transform .35s var(--ease); }
+.pick:hover img, .pick[aria-pressed="true"] img, .pick[aria-checked="true"] img { opacity: 1; }
+.pick:hover img { transform: translateY(-3px); }
+.pick .yr { font: 500 12px/1 var(--f-title); font-variant-numeric: tabular-nums; color: var(--ink-3); padding-bottom: 4px; border-bottom: 2px solid transparent; }
+.pick[aria-pressed="true"] .yr, .pick[aria-checked="true"] .yr { color: var(--ink); font-weight: 700; border-bottom-color: var(--ink); }
+.g-guitars .pick img { height: 13svh; }
+.g-pedals .pick img { height: calc(6svh * var(--h, 1)); }
+.g-amps .pick img { height: var(--th, 6svh); }
+
+/* ---------- sources ---------- */
+.sources { padding: 12svh var(--gutter) 6svh; border-top: 1px solid var(--cream-3); }
+.sources h2 { margin: 0 0 5svh; font: 700 clamp(32px, 3vw, 48px)/1 var(--f-title); letter-spacing: -.03em; }
+.sources .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 6vw; max-width: 1500px; }
+.sources h3 { margin: 0 0 1.2em; font: 600 12px/1 var(--f-title); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.sources h3:not(:first-child) { margin-top: 2.4em; }
+.sources p, .sources li { font-size: 18px; line-height: 1.4; max-width: 62ch; }
+.sources p { margin: 0 0 1em; }
+.sources ul { margin: 0; padding: 0; list-style: none; }
+.sources li { padding: .45em 0; border-bottom: 1px solid var(--cream-2); }
+.copy { margin: 10svh 0 0; font: 500 12px/1 var(--f-title); color: var(--ink-3); }
+
+/* between phone and full desktop: smaller shelf, Play moves left of the title */
+@media (max-width: 1400px) and (min-width: 901px) {
+  .items { gap: 4px; }
+  .g-guitars .pick img { height: 10svh; }
+  .g-pedals .pick img { height: calc(4svh * var(--h, 1)); }
+  .g-amps .pick img { height: calc(var(--th, 6svh) * .66); }
+  .transport { transform: none; left: calc(var(--gutter) + 3vw + var(--gh) * .42); gap: 16px; }
+  .vol span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .vol input { width: 90px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pedal, .pick img, .slot img, .play { transition: none; }
+}
+
+/* ---------- narrow screens: stack, no stage drawing ---------- */
+@media (max-width: 900px) {
+  :root { --floor: 62svh; --gh: 40svh; --ph: 9svh; }
+  .bar-nav { gap: 14px; font-size: 11px; }
+  #rig { height: auto; min-height: 0; overflow: visible; padding: 90px var(--gutter) 6svh; }
+  .head, .transport { position: static; width: auto; transform: none; }
+  .transport { margin: 3svh 0; }
+  .stage { position: relative; height: 66svh; margin: 0 calc(var(--gutter) * -1); }
+  .slot-guitar { left: var(--gutter); }
+  .slot-amp { right: var(--gutter); }
+  .slot-amp img { height: calc(var(--ah, 32svh) * .55); }
+  .shelf { position: static; grid-template-columns: 1fr; gap: 4svh; }
+  .items { overflow-x: auto; justify-content: flex-start !important; padding-bottom: 6px; }
+  .g-pedals h2, .g-amps h2 { text-align: left; }
+  .sources .cols { grid-template-columns: 1fr; gap: 4svh; }
+}

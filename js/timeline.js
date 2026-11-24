@@ -5,9 +5,9 @@
    - 스크롤 연출은 rAF 한 개 + IntersectionObserver로만 돌린다
    ========================================================= */
 
-import { makeSil, shapeOf } from './silhouettes.js?v=202611170339';
-import { cutout } from './media.js?v=202611170339';
-import { m3Prepare, m3Near, m3Draw, m3Status } from './model3d.js?v=202611170339';
+import { makeSil, shapeOf } from './silhouettes.js?v=202611240952';
+import { cutout } from './media.js?v=202611240952';
+import { m3Prepare, m3Near, m3Draw, m3Status } from './model3d.js?v=202611240952';
 
 const $ = (s, r = document) => r.querySelector(s);
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -304,10 +304,10 @@ document.querySelectorAll('.lang button[data-lang]').forEach((b) => {
 });
 if (new URLSearchParams(location.search).has('notes')) document.body.classList.add('show-notes');
 
-const data = await fetch(`data/timeline.${lang}.json?v=202611170339`).then((r) => r.json());
+const data = await fetch(`data/timeline.${lang}.json?v=202611240952`).then((r) => r.json());
 
 /* 작업 범위 — 지금은 이 챕터까지만 그린다. null 이면 전부 */
-const BUILD_UNTIL = 'marshall-super-lead';
+const BUILD_UNTIL = 'strandberg-boden';
 const BUILD_SKIP = ['firebird', 'mustang'];   // 순서상 앞이지만 아직 작업하지 않은 챕터 (mustang: 2026-11-16 라인업에서 제외)
 data.chapters = data.chapters.filter((c) => !BUILD_SKIP.includes(c.id));
 if (BUILD_UNTIL) {
@@ -1801,8 +1801,8 @@ if (!REDUCED && hd._ts < 3.4 && hr.top <= h * 0.12 && hr.top > -h * 0.15) {
   lockRush = 0;
 }
 const ts = REDUCED ? 3.4 : same ? 1.75 + hd._ts * (1.65 / 3.4) : hd._ts;
-// 아래에서 솟는 들머리 — 머리글이 위로 빠지는 동안 물건은 스크롤보다 빨리 화면 위로 사라진다(머리글이 60% 올라가면 다 빠진다)
-if (hd.classList.contains('has-entry--rise')) hd.style.setProperty('--lv', clamp(-hr.top / (h * 0.6)).toFixed(4));
+// 반쪽 들머리(솟는 것·V846처럼 위아래로 걸친 것) — 머리글이 위로 빠지는 동안 물건은 스크롤보다 빨리 화면 위로 사라진다(머리글이 60% 올라가면 다 빠진다)
+if (hd.classList.contains('has-entry--half')) hd.style.setProperty('--lv', clamp(-hr.top / (h * 0.6)).toFixed(4));
 const m = clamp((ts - 0.25) / 1.4);
 const rp = 1 - Math.pow(1 - m, 3);                         // 빠르게 돌다 천천히 선다
 const fd = easeIO(clamp((ts - 1.75) / 0.6));
